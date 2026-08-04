@@ -63,18 +63,30 @@ cause.
 
 ## Model architecture
 
-Decoder-only GPT (causal LM), ~52M parameters:
+Decoder-only GPT (causal LM), **52,901,712 parameters, measured** (M3;
+`tests/test_model.py::test_param_count_near_52m`):
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
 | Layers | 8 | Fits 8GB with checkpointing |
-| Heads | 8 | head_dim = 64 |
-| Embedding | 512 | Standard small-GPT scale |
-| Context | 512 | 1024 likely OOM on 8GB; validate against the measured token-length p90 in M2 |
+| Heads | 8 | head_dim = 74 |
+| Embedding | 592 | Not the originally-guessed 512 — see below |
+| Context | 512 | Validated in M2: covers 99.74% of train docs whole (measured p99=479) |
 | Vocab | 32k BPE | Standard for small LMs |
 | Norm | LayerNorm, pre-LN | Hand-written; simpler to reason about than RMSNorm |
 | Activation | GELU | 4× MLP, GPT-2 style |
 | Positional | Learned | RoPE is listed as a "what I'd do next" in `docs/LIMITATIONS.md` |
+
+**Why `n_embd=592`, not 512:** the original 512 was a guess that predates ever
+building the model. With weight tying (below) and the rest of this table fixed,
+512 measures at 41.8M params — a ~20% gap from the project's own "~52M" branding
+(README, portfolio tagline). The fix was picking the cheapest lever: keep 8
+layers, 512 context, 32k vocab, and weight tying exactly as already documented,
+and widen the embedding dimension until the count lands close. 592 (=74×8, so
+`head_dim` stays an integer) measures at 52.9M — 1.73% off — versus untying
+weights instead, which would hit 58.2M (~12% off) while reversing an already
+deliberate design decision for no good reason. See `configs/micro_50m_8gb.yaml`'s
+header comment for the same reasoning in the config itself.
 
 **Implementation:** `src/model.py` is written by hand (~300 lines) using nanoGPT as a
 reference, not forked from it. `F.scaled_dot_product_attention(..., is_causal=True)`

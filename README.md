@@ -8,12 +8,14 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚧 **M0 + M1 + M2 complete** — environment bootstrapped, data pipeline done, EDA +
-data card written. TinyStories cleaned, deduped, tokenized: 1,748,358 train docs /
-357,852,786 tokens, 15,141 val docs / 2,956,183 tokens. 99.74% of train documents fit
-whole within `block_size=512` (measured p99 = 479 tokens). Model architecture (M3) is
-next. Nothing has been trained yet; every number below marked *target* is a target,
-not a result.
+🚧 **M0–M3 complete** — environment bootstrapped, data pipeline done, EDA + data card
+written, model architecture built and tested. TinyStories cleaned, deduped, tokenized:
+1,748,358 train docs / 357,852,786 tokens, 15,141 val docs / 2,956,183 tokens. 99.74%
+of train documents fit whole within `block_size=512` (measured p99 = 479 tokens).
+`src/model.py` measures at **52,901,712 params** and runs a real forward+backward on
+the target GPU in bf16 (peak VRAM 1043 MiB for one batch). Training loop (M4) is next.
+Nothing has been trained yet; every number below marked *target* is a target, not a
+result.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -33,7 +35,7 @@ rather than a large one fine-tuned and demoed on vibes.
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Architecture | 8 layers, 8 heads, 512 embd, 512 context | ~52M params; fits 8 GB with checkpointing |
+| Architecture | 8 layers, 8 heads, 592 embd, 512 context | **52.9M params, measured**; fits 8 GB with checkpointing |
 | Vocab | 32k byte-level BPE, trained in-domain | Standard for small LMs; train-split only |
 | Precision | **BF16** | Ada supports it — no GradScaler, no loss-scale debugging |
 | Implementation | Hand-written `src/model.py` | The architecture code *is* the deliverable |

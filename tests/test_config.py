@@ -13,7 +13,10 @@ def test_loads_baseline_config():
     cfg = load_config(CONFIG_PATH)
     assert cfg.name == "micro_50m_8gb"
     assert cfg.model.n_layer == 8
-    assert cfg.model.n_embd == 512
+    # 592, not the originally-guessed 512 — with weight tying, 512 measures
+    # at 41.8M params (~20% under the project's "~52M" branding). See
+    # configs/micro_50m_8gb.yaml's header comment and docs/PROJECT.md.
+    assert cfg.model.n_embd == 592
     assert cfg.training.learning_rate == pytest.approx(3.0e-4)
     assert cfg.seed == 42
 
@@ -24,7 +27,7 @@ def test_precision_is_bf16_not_fp16():
 
 
 def test_head_dim_divides_evenly():
-    assert load_config(CONFIG_PATH).model.head_dim == 64
+    assert load_config(CONFIG_PATH).model.head_dim == 74
 
 
 def test_derived_scale_arithmetic():

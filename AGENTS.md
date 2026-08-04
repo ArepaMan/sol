@@ -23,17 +23,25 @@ Read this file at the start of any session working on this repo.
 > That machine is not this machine. 8 GB is still the binding constraint, so the
 > hardware-aware sizing story is unchanged; only the precision rationale moved.
 
-## Locked-in model config (~52M params)
+## Locked-in model config (~52M params, measured)
 
 ```yaml
 n_layer: 8
 n_head: 8
-n_embd: 512
+n_embd: 592
 block_size: 512
 vocab_size: 32000
 dropout: 0.0
 bias: false
 ```
+
+**Measured (not estimated) param count: 52,901,712** with weight tying
+(`tests/test_model.py::test_param_count_near_52m`). `n_embd=592` rather than
+the earlier-guessed 512 — see `configs/micro_50m_8gb.yaml`'s header comment
+for why: 512 measured at 41.8M (a ~20% gap from the project's own "~52M"
+branding), and 592 (=74×8, keeps `head_dim` an integer) lands within 1.73%
+while leaving every other locked value — 8 layers, 512 context, 32k vocab,
+weight tying — untouched.
 
 **Training defaults:** micro-batch 4, grad accum 16, LR 3e-4, warmup 1000, max_iters ~40000, max_train_tokens 400M.
 
@@ -112,7 +120,7 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0 + M1 + M2 complete.** Next: M3 (hand-written `src/model.py` + architecture tests).
+**M0 + M1 + M2 + M3 complete.** Next: M4 (training loop + smoke gates + benchmark).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -123,10 +131,12 @@ disproportionate interview weight.
 - [x] M1 data pipeline: `data/{prepare,train_tokenizer,tokenize}.py`, `src/data.py`
 - [x] M2 EDA notebook + data card: `data/eda.ipynb`, `docs/DATA_CARD.md`,
       `docs/figures/*.png`, `src/plot_style.py`
-- [ ] M3 model / M4 training / M6 eval / M8 demo
+- [x] M3 model: `src/model.py` (52,901,712 params, measured), `tests/test_model.py`
+- [ ] M4 training / M6 eval / M8 demo
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 54 tests passing.
+RTX 4070 Laptop (sm_89), 65 tests passing (incl. a real ~53M-param forward+backward
+on CUDA in bf16 — peak VRAM 1043 MiB, well under the 7400 MiB M4 target).
 
 **M1 measured numbers** (see `data/processed/stats.json`, `data/tokenized/meta.json`,
 `docs/DATA_CARD.md`): train 1,748,358 docs / 357,852,786 tokens (14.58% within-train

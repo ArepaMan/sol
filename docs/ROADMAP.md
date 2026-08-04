@@ -11,7 +11,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 0 | ✅ Env bootstrap, spec correction, public repo | 2–3 h | — | ✅ |
 | 1 | ✅ Data pipeline + BPE tokenizer | 8–12 h | 1–2 h | |
 | 2 | ✅ EDA notebook + data card | 5–7 h | — | |
-| 3 | `src/model.py` hand-written + tests | 8–12 h | — | |
+| 3 | ✅ `src/model.py` hand-written + tests | 8–12 h | — | |
 | 4 | Training loop + smoke gates + benchmark | 8–10 h | — | |
 | 5 | Baseline run 001 | 1 h | 12–24 h | |
 | 6 | Eval harness | 6–8 h | 1 h | |
@@ -177,26 +177,47 @@ bug, not just recording results.
 
 ---
 
-## M3 — `src/model.py` hand-written + architecture tests
+## M3 — `src/model.py` hand-written + architecture tests ✅ done
 
-~300 lines: `CausalSelfAttention` via `F.scaled_dot_product_attention(..., is_causal=True)`;
+~230 lines: `CausalSelfAttention` via `F.scaled_dot_product_attention(..., is_causal=True)`;
 4× GELU `MLP`; pre-LN `Block`; `GPT` with weight tying, learned positional embeddings,
 GPT-2 scaled init (`0.02/sqrt(2*n_layer)` on residual projections); `configure_optimizers`
 splitting decay/no-decay groups with fused AdamW; `estimate_mfu()`; `generate()` with
 temperature/top-k; per-block checkpointing via `checkpoint(..., use_reentrant=False)`.
 
-**`tests/test_model.py` — six tests:**
+**Decision made here:** the config's `n_embd` changed from the originally-guessed 512 to
+**592**. With weight tying and every other value locked (8 layers, 512 context, 32k vocab),
+512 measures at 41.8M params — a ~20% gap from the project's "~52M" branding. 592 (=74×8,
+keeps `head_dim` an integer) measures at **52,901,712** — 1.73% off — without touching
+anything else already documented. See `configs/micro_50m_8gb.yaml`'s header comment and
+`docs/PROJECT.md` for the full reasoning (untying weights instead would hit 58.2M but
+reverses an already-deliberate design decision for no good reason).
 
-| # | Test | Catches |
-|---|------|---------|
-| a | param count within 5% of 52M | config drift |
-| b | forward shape `(B,T,vocab)` | plumbing |
-| c | **causality** — perturbing `x[:, t+1:]` must not change `logits[:, t]` | the bug that silently invalidates the whole project |
-| d | loss at init ≈ `ln(32000)` ≈ 10.37 ± 0.15 | broken init or weight tying |
-| e | `generate()` respects `max_new_tokens`, never emits ids ≥ vocab | sampling bugs |
-| f | checkpointing on/off give identical logits (atol 1e-4) | re-entrant checkpointing breaking SDPA |
+**`tests/test_model.py` — 12 tests, not the originally-planned 6:**
 
-Test (c) is the one to name in interviews.
+| Test | Catches |
+|------|---------|
+| param count == 52,901,712, within 5% of 52M | config drift |
+| forward shape `(B,T,vocab)` | plumbing |
+| **causality** — perturbing `x[:, t+1:]` must not change `logits[:, t]` | the bug that silently invalidates the whole project |
+| loss at init ≈ `ln(32000)` ≈ 10.37 ± 0.15 | broken init or weight tying |
+| `generate()` respects `max_new_tokens`, never emits ids ≥ vocab, preserves prompt prefix | sampling bugs |
+| `generate()` with `top_k=1` is seed-independent (argmax every step) | sampling non-determinism |
+| checkpointing on/off give identical logits (atol 1e-4) | re-entrant checkpointing breaking SDPA |
+| `wte.weight is lm_head.weight` + param count isn't double-counted | weight-tying bugs |
+| sequence longer than `block_size` raises | silent truncation/index errors |
+| `configure_optimizers` decay/no-decay split is dim-based and correct | wrong params getting weight-decayed |
+| **(gpu)** full ~53M-param model, real config, bf16 autocast, forward+backward on the actual RTX 4070 | architecture bugs that only appear at real scale/precision, not the tiny CPU test config |
+
+Test (c), causality, is the one to name in interviews — and it was verified to actually
+catch a broken implementation, not just pass vacuously: monkeypatching
+`F.scaled_dot_product_attention` to force `is_causal=False` flips the assertion to fail,
+confirming the test has teeth.
+
+**Quick VRAM preview** (not the formal M4 benchmark): one forward+backward at the real
+config's `batch_size=4`, bf16, gradient checkpointing on — **1043 MiB** peak. Comfortably
+under the 7400 MiB target, though optimizer state and the full training loop (M4) will
+add more.
 
 **Skills:** transformer fundamentals (3).
 

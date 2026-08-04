@@ -18,12 +18,22 @@
 # measured value rather than padded to the original target.
 # Wall-clock is deliberately not asserted here; it is measured in M4
 # (src/benchmark.py) and recorded in experiments/000_benchmark/results.md.
+#
+# n_embd=592 (not 512): with weight tying and this config's vocab/depth/context,
+# n_embd=512 measures at 41.8M params — a ~20% gap from the "~52M" the project
+# is named and branded around everywhere (README, portfolio). Untying weights
+# would hit 58.2M but reverses an already-made, deliberate design decision
+# (see docs/PROJECT.md "Resolved decisions") for no good reason. 592 (=74*8,
+# so head_dim=74 stays an integer) measures at 52.9M tied — 1.73% off target —
+# while keeping n_layer=8, block_size=512, vocab_size=32000, and weight tying
+# exactly as documented everywhere else. See tests/test_model.py for the
+# measured-param-count gate.
 name: micro_50m_8gb
 
 model:
   n_layer: 8
   n_head: 8
-  n_embd: 512
+  n_embd: 592
   block_size: 512
   vocab_size: 32000
   dropout: 0.0

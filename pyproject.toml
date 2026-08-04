@@ -1,0 +1,22 @@
+[project]
+name = "sol"
+version = "0.1.0"
+description = "A ~52M-parameter decoder-only transformer trained from scratch on TinyStories"
+requires-python = ">=3.11,<3.13"
+
+[tool.pytest.ini_options]
+# Lets tests do `from src.model import GPT` without sys.path hacks.
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "gpu: requires a CUDA device (deselect with '-m \"not gpu\"')",
+    "slow: takes more than a few seconds",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

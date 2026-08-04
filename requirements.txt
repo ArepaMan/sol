@@ -1,0 +1,38 @@
+# Sol dependencies — Python 3.12
+#
+# IMPORTANT: torch must be installed from the CUDA index FIRST, or pip will
+# silently resolve the CPU-only wheel and every GPU path in this repo dies
+# with a confusing "CUDA not available" much later:
+#
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+#   pip install -r requirements.txt
+#
+# tests/test_env.py is the gate that catches a CPU-only install.
+
+torch==2.6.0
+
+# Data pipeline
+datasets==3.2.0
+tokenizers==0.21.0
+numpy==2.2.1
+
+# Config / CLI
+pyyaml==6.0.2
+tqdm==4.67.1
+
+# Experiment tracking
+wandb==0.19.1
+
+# Analysis / EDA (M2)
+matplotlib==3.10.0
+pandas==2.2.3
+scipy==1.15.0
+jupyter==1.1.1
+
+# Demo (M8)
+gradio==5.9.1
+huggingface-hub==0.27.0
+
+# Dev
+pytest==8.3.4
+ruff==0.8.6

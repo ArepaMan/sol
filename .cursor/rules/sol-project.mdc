@@ -1,0 +1,40 @@
+---
+description: Sol LLM project context — goals, hardware limits, architecture, conventions
+alwaysApply: true
+---
+
+# Sol Project Rules
+
+This is **Sol**: a ~52M-param GPT trained from scratch on TinyStories for a DS/Applied ML/AI Engineer portfolio.
+
+## Hard constraints
+
+- GPU: **RTX 4070 Laptop** (Ada, sm_89), **8 GB VRAM** — model ~52M, context **512**,
+  **BF16** (not FP16 — Ada supports bf16, so no GradScaler), gradient checkpointing on
+- Do not target 1024 context or 125M+ params without explicit user approval
+
+## Before coding
+
+1. Read `AGENTS.md` and `docs/PROJECT.md` for current status and decisions
+2. Read `docs/ROADMAP.md` for the current milestone and its exit criteria
+3. Use YAML configs in `configs/` for training runs — read them via `src/config.py`
+4. Log experiments to `experiments/` with numbered folders
+
+## Code style
+
+- **Python 3.12** in `.venv` (system Python is 3.14 and has no torch wheel)
+- Type hints where helpful
+- Config-driven; **no magic numbers** — `configs/micro_50m_8gb.yaml` is the single
+  source of truth, and `tests/test_spec_drift.py` enforces it
+- Minimal scope — no unrelated refactors
+- Gitignore checkpoints, raw data, wandb runs, `.env`
+
+## Portfolio priorities
+
+Every feature should support interview talking points: data pipeline, training, eval metrics, ablations, reproducibility, demo, documented limitations.
+
+## Do not
+
+- Claim "GPT competitor" or SOTA in docs
+- Commit secrets or large artifacts
+- Create git commits unless user asks

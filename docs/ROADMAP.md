@@ -12,7 +12,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 1 | ✅ Data pipeline + BPE tokenizer | 8–12 h | 1–2 h | |
 | 2 | ✅ EDA notebook + data card | 5–7 h | — | |
 | 3 | ✅ `src/model.py` hand-written + tests | 8–12 h | — | |
-| 4 | Training loop + smoke gates + benchmark | 8–10 h | — | |
+| 4 | ✅ Training loop + smoke gates + benchmark | 8–10 h | — | |
 | 5 | Baseline run 001 | 1 h | 12–24 h | |
 | 6 | Eval harness | 6–8 h | 1 h | |
 | 7 | Ablations + seed variance | 3 h | 20–40 h | |
@@ -223,56 +223,102 @@ add more.
 
 ---
 
-## M4 — Training loop + smoke gates + VRAM/throughput benchmark
+## M4 — Training loop + smoke gates + VRAM/throughput benchmark ✅ done
 
 **The most important milestone for interview credibility.** Nothing long-running starts
 until all three gates are green.
 
 **Files:** `src/train.py`, `src/benchmark.py`, `tests/test_train.py`,
-`experiments/000_benchmark/results.md`.
+`tests/test_benchmark.py`, `tests/test_checkpoint.py`, `experiments/000_benchmark/results.md`.
 
 `src/train.py` carries: cosine LR + linear warmup as a **pure `get_lr(it)` function** (so
 it is unit-testable without a GPU); grad accumulation; `autocast(dtype=torch.bfloat16)`
-**with no GradScaler** — BF16 needs none; `clip_grad_norm_(1.0)` before the step; W&B
-logging of loss/lr/grad_norm/tokens-per-s/MFU/peak-VRAM and **`data_time` vs `step_time`
-separately**; checkpoint on interval and on best-val; full resume including RNG state;
-`--overfit-batch` mode.
+**with no GradScaler** — BF16 needs none; `clip_grad_norm_(1.0)` before the step; console
++ optional W&B logging of loss/lr/grad_norm/tokens-per-s/peak-VRAM and **`data_time` vs
+`step_time` separately**; checkpoint on interval and on best-val; full resume including
+RNG state (python/numpy/torch/cuda **and** `BinDataset`'s own per-instance `Generator` —
+see `src/data.py`); `--overfit-batch` mode.
 
-### Gate 1 — overfit a single batch
+### Gate 1 — overfit a single batch ✅
 ```
-python -m src.train --config configs/micro_50m_8gb.yaml --overfit-batch --max-iters 200 --no-wandb
+python -m src.train --config configs/micro_50m_8gb.yaml --overfit-batch --max-iters 260 --no-wandb
 ```
-Loss must go **10.37 → < 0.1 within 200 iters**. A plateau above ~1.0 means a bug in the
-target shift, the mask, or the optimizer param groups — debug *here*, not ten hours in.
+**Result: loss 10.4330 → 0.0224 by iter 240** (200 iters technically cleared the <0.1
+bar at 0.0996, but that's a photo finish for a gate whose whole point is a *confident*
+signal — extended to 260 for real headroom). Val/checkpoint mechanics untouched.
 
 > *"I never start a long run without proving the model can memorise one batch."*
 
-### Gate 2 — VRAM + throughput benchmark
+### Gate 2 — VRAM + throughput benchmark ✅
 ```
 python -m src.benchmark --config configs/micro_50m_8gb.yaml --sweep
 ```
-Measured table for at least `(b4,ckpt on)`, `(b4,ckpt off)`, `(b8,ckpt on)`,
-`(b4,ckpt on,compile)`. Chosen config peak VRAM **< 7400 MiB** (~800 MiB headroom for
-Windows WDDM + display). **Settle `torch.compile` on evidence:** flip it on if it buys
-≥15% tokens/s and compiles in <5 min; if Triton fails on Windows, record *that* as the
-reason. Either outcome is a good answer.
+**Result** (`experiments/000_benchmark/results.md`, RTX 4070 Laptop, bf16):
 
-### Gate 3 — short real run + resume
+| batch_size | ckpt | compile | peak VRAM | tokens/s | status |
+|---|---|---|---|---|---|
+| 4 | True | False | 1460 MiB | 22,484 | ok |
+| **4** | **False** | **False** | **2137 MiB** | **28,722** | **ok — chosen** |
+| 8 | True | False | 2247 MiB | 23,110 | ok |
+| 4 | True | True | — | — | Triton not installed |
+| 16 | False | False | 6337 MiB | 30,262 | ok |
+| 32 | False | False | 11965 MiB | 4,934 | ⚠️ shared-memory spill |
+| 16 | True | False | 3836 MiB | 22,901 | ok |
+| 32 | True | False | 7016 MiB | 22,139 | ok |
+| 64 | False | False | — | — | OOM |
+
+**`compile`: settled false, by measurement.** Triton isn't installed on this Windows
+setup — a real `BackendCompilerFailed`, not a guess.
+
+**`gradient_checkpointing`: flipped from the originally-"required" true to false** —
+raised to the user rather than decided silently, since it reversed a documented hard
+constraint. At the chosen `batch_size=4`, checkpointing cost ~26% throughput (17k vs
+21.5–28.7k tok/s, depending on measurement) for VRAM headroom that isn't needed (2137
+MiB vs the 7400 MiB target). See `configs/micro_50m_8gb.yaml`'s header comment and
+`docs/PROJECT.md` for the full reasoning.
+
+**A real footgun found while probing headroom, not guessed:** `batch_size=32` without
+checkpointing doesn't cleanly OOM — `peak_vram` reports **11,965 MiB, more than the
+card's 8,188 MiB physical total**, while `ok=True` and throughput silently collapses to
+~15% of normal (4,934 vs ~30k tok/s at batch 16). CUDA on Windows falls back to slow
+shared/system memory instead of raising. `BenchmarkResult.suspected_shared_memory_spill`
+exists specifically to catch this instead of reading a large-but-"fine" VRAM number and
+missing what actually happened. A clean OOM only appears at `batch_size=64`.
+
+### Gate 3 — short real run + resume ✅
 ```
-python -m src.train --config configs/micro_50m_8gb.yaml --max-iters 500
+python -m src.train --config configs/micro_50m_8gb.yaml --run-name gate3 --max-iters 500 --eval-interval 100 --eval-iters 20 --no-wandb
+python -m src.train --config configs/micro_50m_8gb.yaml --run-name gate3 --max-iters 1000 --eval-interval 100 --eval-iters 20 --resume --no-wandb
 ```
-Val loss strictly decreasing; checkpoint written; `--resume` continues within ±0.02 —
-proving the resume path *before* you need it at hour 9.
+**Result:** val loss strictly decreasing across both runs — 6.90 → 4.76 → 4.02 → 3.49
+(part 1) → 2.98 → 2.81 → 2.68 → 2.49 (part 2, post-resume). No discontinuity at the
+resume boundary (iter 480 train loss 3.2602 → iter 500 3.2703, noise-level). Data
+loading overhead stayed at 0.5–4.2% throughout — confirms the memmap loader isn't the
+bottleneck.
 
-### Recalibrate the time estimate here, by measurement
-`hours = 40000 × 32768 / tokens_per_sec / 3600`. Expect 15k–30k tok/s → **12–24 h**.
-Replace the spec's number with the measured one. **If the projection exceeds ~20 h, cut
-`max_iters` to ~24000 (≈2 epochs)** rather than quietly overrunning.
+**A real bug caught here, not hypothesized:** the first resume attempt crashed —
+`TypeError: RNG state must be a torch.ByteTensor`. `torch.load(..., map_location=device)`
+moves *every* tensor in the checkpoint onto that device, including the RNG state byte
+tensor, which `torch.set_rng_state` specifically rejects unless it's on CPU. Fixed by
+explicitly `.cpu()`-ing the RNG tensors in `_restore_rng_state` before restoring them.
+`tests/test_checkpoint.py::test_checkpoint_round_trip_cuda` pins this — verified it
+actually catches the regression by reverting the fix and confirming the test fails with
+the exact original error, then restoring it.
 
-**Risks.** OOM → the fallback ladder becomes a measurement, not a surprise; set
-`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`. Dataloader bottleneck → the
-`data_time`/`step_time` split diagnoses it (should be <3% with memmap). WDDM reserving
-VRAM → benchmark with the browser closed and note the delta.
+**A latent caveat documented, not fixed:** `--max-iters` (without an explicit
+`--lr-decay-iters`) also resets `lr_decay_iters` to match. A resumed run passing a
+*different* `--max-iters` than the original changes the LR decay horizon mid-training.
+Harmless here (both gate runs' `max_iters` stayed under `warmup_iters=1000`, so both
+remained pure linear warmup with no discontinuity) but a real risk once either value
+exceeds `warmup_iters`. Documented in `docs/COMMANDS.md`; recommendation is to keep
+`--max-iters` (or an explicit `--lr-decay-iters`) consistent across a run and its resumes.
+
+### Time estimate, recalibrated by measurement, not guessed
+Isolated benchmark (b4, no-ckpt): 28,722 tok/s → 12.7 h for 40,000 iters. **Real
+production loop** (Gate 3, steady-state, includes eval + checkpoint overhead): **21,500
+tok/s → 16.9 h.** The gap between the two is itself a finding — an isolated
+micro-benchmark optimistically undercounts real-loop overhead. **16.9 h is under the ~20
+h cutoff, so `max_iters` stays at 40,000** rather than being cut to ~24,000.
 
 **Skills:** training (4), OOM debugging (4), reproducibility (7).
 

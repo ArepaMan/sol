@@ -50,6 +50,23 @@ def test_no_index_exceeds_vocab_size(tokenized_dir):
     assert y.max().item() < VOCAB_SIZE
 
 
+def test_rng_state_roundtrip_resumes_batch_sequence(tokenized_dir):
+    """The property M4's checkpoint/resume gate depends on: saving and
+    restoring get_rng_state()/set_rng_state() must continue the *same*
+    pseudo-random batch sequence, not restart it."""
+    ds = BinDataset(tokenized_dir, seed=0)
+    ds.get_batch("train", batch_size=4, block_size=16, device=torch.device("cpu"))  # advance state
+    saved_state = ds.get_rng_state()
+    x_next_a, y_next_a = ds.get_batch("train", batch_size=4, block_size=16, device=torch.device("cpu"))
+
+    ds2 = BinDataset(tokenized_dir, seed=999)  # different seed entirely
+    ds2.set_rng_state(saved_state)
+    x_next_b, y_next_b = ds2.get_batch("train", batch_size=4, block_size=16, device=torch.device("cpu"))
+
+    assert torch.equal(x_next_a, x_next_b)
+    assert torch.equal(y_next_a, y_next_b)
+
+
 def test_determinism_under_fixed_seed(tokenized_dir):
     ds1 = BinDataset(tokenized_dir, seed=123)
     ds2 = BinDataset(tokenized_dir, seed=123)

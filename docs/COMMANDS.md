@@ -75,10 +75,22 @@ python -m src.train --config configs/micro_50m_8gb.yaml --overfit-batch --max-it
 # Gate 2 — VRAM / throughput sweep. Target peak < 7400 MiB.
 python -m src.benchmark --config configs/micro_50m_8gb.yaml --sweep
 
-# Gate 3 — short run, then verify resume.
-python -m src.train --config configs/micro_50m_8gb.yaml --max-iters 500
-python -m src.train --config configs/micro_50m_8gb.yaml --max-iters 1000 --resume
+# Gate 3 — short run, then verify resume (same --run-name both times so the
+# second command finds the first's checkpoint).
+python -m src.train --config configs/micro_50m_8gb.yaml --run-name gate3 --max-iters 500 --no-wandb
+python -m src.train --config configs/micro_50m_8gb.yaml --run-name gate3 --max-iters 1000 --resume --no-wandb
+```
 
+> **`--resume` caveat:** `--max-iters` (without an explicit `--lr-decay-iters`) also
+> resets `lr_decay_iters` to match. If a resumed run passes a *different*
+> `--max-iters` than the original, the LR schedule's decay horizon changes
+> mid-training — harmless as long as both values stay under `warmup_iters` (still
+> pure linear warmup either way, as in the example above), but a real
+> discontinuity risk once either run's `max_iters` exceeds `warmup_iters`. Prefer
+> the same `--max-iters` (or an explicit matching `--lr-decay-iters`) across a
+> run and its resumes for a real (non-gate) training run.
+
+```powershell
 # Baseline run.
 python -m src.train --config configs/micro_50m_8gb.yaml --run-name 001_baseline
 ```

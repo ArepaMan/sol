@@ -8,14 +8,17 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚧 **M0–M3 complete** — environment bootstrapped, data pipeline done, EDA + data card
-written, model architecture built and tested. TinyStories cleaned, deduped, tokenized:
-1,748,358 train docs / 357,852,786 tokens, 15,141 val docs / 2,956,183 tokens. 99.74%
-of train documents fit whole within `block_size=512` (measured p99 = 479 tokens).
-`src/model.py` measures at **52,901,712 params** and runs a real forward+backward on
-the target GPU in bf16 (peak VRAM 1043 MiB for one batch). Training loop (M4) is next.
-Nothing has been trained yet; every number below marked *target* is a target, not a
-result.
+🚧 **M0–M4 complete** — environment bootstrapped, data pipeline done, EDA + data card
+written, model built and tested, training loop built and all three smoke gates passed.
+TinyStories: 1,748,358 train docs / 357,852,786 tokens, 15,141 val docs / 2,956,183
+tokens. `src/model.py` measures at **52,901,712 params**. Gate 1 (overfit one batch)
+reached loss 0.0224; Gate 2 (VRAM/throughput sweep) settled `gradient_checkpointing:
+false` and `compile: false` by measurement, not assumption — chosen config peaks at
+2137 MiB, tokens/s scales to **~16.9h for the real 40,000-iter baseline run**; Gate 3
+(resume) verified a checkpoint round-trip, including RNG state. See
+[`docs/ROADMAP.md`](docs/ROADMAP.md) M4 for full results. The actual baseline run (M5)
+is next — nothing has been trained end-to-end yet, and every number below marked
+*target* is a target, not a result.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -35,7 +38,7 @@ rather than a large one fine-tuned and demoed on vibes.
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Architecture | 8 layers, 8 heads, 592 embd, 512 context | **52.9M params, measured**; fits 8 GB with checkpointing |
+| Architecture | 8 layers, 8 heads, 592 embd, 512 context | **52.9M params, measured**; fits 8 GB comfortably (2137 MiB peak) without checkpointing |
 | Vocab | 32k byte-level BPE, trained in-domain | Standard for small LMs; train-split only |
 | Precision | **BF16** | Ada supports it — no GradScaler, no loss-scale debugging |
 | Implementation | Hand-written `src/model.py` | The architecture code *is* the deliverable |

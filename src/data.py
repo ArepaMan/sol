@@ -33,6 +33,16 @@ class BinDataset:
             self._arrays[split] = np.memmap(path, dtype=np.uint16, mode="r")
         return self._arrays[split]
 
+    def get_rng_state(self) -> dict:
+        """For checkpoint/resume: `self._rng` is a per-instance Generator, not
+        the numpy global state, so `np.random.get_state()` would not capture
+        it — resuming a run without this would replay the *same* batch
+        sequence from scratch rather than continuing where training left off."""
+        return self._rng.bit_generator.state
+
+    def set_rng_state(self, state: dict) -> None:
+        self._rng.bit_generator.state = state
+
     def __len__(self) -> int:
         return sum(len(self._array(s)) for s in ("train", "val") if (self._dir / f"{s}.bin").exists())
 

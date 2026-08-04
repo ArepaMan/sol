@@ -68,7 +68,7 @@ Decoder-only GPT (causal LM), **52,901,712 parameters, measured** (M3;
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Layers | 8 | Fits 8GB with checkpointing |
+| Layers | 8 | Comfortably fits 8GB even without checkpointing — see M4 below |
 | Heads | 8 | head_dim = 74 |
 | Embedding | 592 | Not the originally-guessed 512 — see below |
 | Context | 512 | Validated in M2: covers 99.74% of train docs whole (measured p99=479) |
@@ -105,8 +105,8 @@ max_iters: 40000
 weight_decay: 0.1
 grad_clip: 1.0
 precision: bfloat16
-gradient_checkpointing: true
-compile: false  # revisit in M4 benchmark
+gradient_checkpointing: false  # measured in M4 — see below, not the originally-assumed true
+compile: false  # Triton not installed on Windows — measured, not assumed
 ```
 
 **Why BF16 rather than FP16:** the RTX 4070 Laptop is Ada Lovelace (sm_89), which
@@ -115,14 +115,33 @@ and none of the loss-scale tuning FP16 demands — one fewer source of silent di
 in a 20-hour run. (An earlier draft of this spec targeted a Turing-generation RTX 2070
 Super, where FP16 would have been forced.)
 
-**OOM fallback order:**
+**Why `gradient_checkpointing: false`, not the originally-"required" true:** M4's
+benchmark (`src/benchmark.py`, `experiments/000_benchmark/results.md`) measured
+`batch_size=4` at **2137 MiB without checkpointing** (~21,500 tok/s) vs **1460 MiB with
+it** (~17,000 tok/s — ~26% slower). Both are far under the 8 GB budget; the "required"
+assumption predated knowing this model's true, much smaller than originally guessed,
+memory footprint (see the `n_embd` correction above). Checkpointing only becomes
+genuinely necessary around `batch_size` 24–32.
 
-1. batch 2, grad accum 32
-2. n_layer 6 (~39M params)
-3. block_size 384
+**A real footgun found while measuring this, not guessed:** exceeding physical VRAM on
+this Windows/CUDA setup does **not** cleanly OOM. At `batch_size=32` without
+checkpointing, `torch.cuda.max_memory_allocated()` reported ~11,965 MiB — more than the
+card's 8,188 MiB physical total — while `ok=True` and throughput silently collapsed to
+~15% of normal (4,468 vs ~21,500 tok/s). CUDA on Windows falls back to slow shared/system
+memory rather than raising. `src/benchmark.py`'s `suspected_shared_memory_spill` check
+exists specifically to catch this instead of reading a large-but-"fine" VRAM number and
+missing what actually happened. A clean OOM only appears at `batch_size=64`.
 
-This ladder is exercised as a *measurement* in M4 (`src/benchmark.py`), not discovered
-mid-run. Target: peak VRAM < 7400 MiB, leaving ~800 MiB headroom for Windows WDDM.
+**OOM fallback order** (if `batch_size` is ever increased and this stops fitting):
+
+1. `gradient_checkpointing: true` first — free at up to ~26% throughput cost, no
+   architecture change, and covers up to `batch_size` ~16–24 with headroom to spare
+2. batch 2, grad accum 32 (if still short)
+3. n_layer 6 (~39M params) or block_size 384 (last resort — changes the architecture)
+
+Target: peak VRAM < 7400 MiB, leaving ~800 MiB headroom for Windows WDDM. **Never trust
+a peak-VRAM number alone above ~8000 MiB on this setup without checking for the
+shared-memory-spill signature above.**
 
 ## Expected results (realistic)
 

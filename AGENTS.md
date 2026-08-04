@@ -17,11 +17,20 @@ Read this file at the start of any session working on this repo.
 | VRAM | 8 GB (8188 MiB) |
 | Precision | **BF16** — Ada supports it; no GradScaler, no loss-scale debugging |
 | Max context | **512** tokens |
-| Gradient checkpointing | Required |
+| Gradient checkpointing | **Off** at `batch_size=4` — measured, not assumed (see below) |
 
 > An earlier draft targeted an RTX 2070 Super and concluded "FP16, not BF16 — Turing".
 > That machine is not this machine. 8 GB is still the binding constraint, so the
 > hardware-aware sizing story is unchanged; only the precision rationale moved.
+
+> A second earlier draft said gradient checkpointing was **required**. M4's benchmark
+> measured `batch_size=4` at 2137 MiB without it (~21,500 tok/s) vs 1460 MiB with it
+> (~17,000 tok/s, ~26% slower) — both far under the 8 GB budget. The "required"
+> assumption predated knowing this model's true (much smaller than originally guessed,
+> see the M3 `n_embd` correction) memory footprint. It becomes genuinely necessary only
+> around `batch_size` 24–32 — and above that, a real footgun: exceeding physical VRAM on
+> Windows doesn't cleanly OOM, it silently spills into shared/system memory at ~15% of
+> normal throughput. See `experiments/000_benchmark/results.md`.
 
 ## Locked-in model config (~52M params, measured)
 
@@ -120,7 +129,7 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0 + M1 + M2 + M3 complete.** Next: M4 (training loop + smoke gates + benchmark).
+**M0–M4 complete.** Next: M5 (baseline run 001 — the real ~17h training run).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -132,11 +141,15 @@ disproportionate interview weight.
 - [x] M2 EDA notebook + data card: `data/eda.ipynb`, `docs/DATA_CARD.md`,
       `docs/figures/*.png`, `src/plot_style.py`
 - [x] M3 model: `src/model.py` (52,901,712 params, measured), `tests/test_model.py`
-- [ ] M4 training / M6 eval / M8 demo
+- [x] M4 training: `src/train.py`, `src/benchmark.py` — all 3 gates passed, see
+      `docs/ROADMAP.md` M4 for full measured results
+- [ ] M5 baseline run / M6 eval / M8 demo
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 65 tests passing (incl. a real ~53M-param forward+backward
-on CUDA in bf16 — peak VRAM 1043 MiB, well under the 7400 MiB M4 target).
+RTX 4070 Laptop (sm_89), 85 tests passing. Real production training loop measured at
+**21,500 tok/s → ~16.9h for the full 40,000-iter baseline run** (M5, next).
+`gradient_checkpointing` flipped to **false** after measurement (see Hardware
+constraint above) — chosen config peaks at 2137 MiB, far under the 7400 MiB target.
 
 **M1 measured numbers** (see `data/processed/stats.json`, `data/tokenized/meta.json`,
 `docs/DATA_CARD.md`): train 1,748,358 docs / 357,852,786 tokens (14.58% within-train

@@ -9,8 +9,11 @@ This is **Sol**: a ~52M-param GPT trained from scratch on TinyStories for a DS/A
 
 ## Hard constraints
 
-- GPU: **RTX 4070 Laptop** (Ada, sm_89), **8 GB VRAM** — model ~52M, context **512**,
-  **BF16** (not FP16 — Ada supports bf16, so no GradScaler), gradient checkpointing on
+- GPU: **RTX 4070 Laptop** (Ada, sm_89), **8 GB VRAM** — model ~53M (measured
+  52,901,712), context **512**, **BF16** (not FP16 — Ada supports bf16, so no
+  GradScaler). Gradient checkpointing **off** at the chosen `batch_size=4` —
+  measured in M4 to cost ~26% throughput for VRAM headroom that isn't needed;
+  see `experiments/000_benchmark/results.md` before changing batch size
 - Do not target 1024 context or 125M+ params without explicit user approval
 
 ## Before coding

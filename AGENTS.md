@@ -112,16 +112,27 @@ disproportionate interview weight.
 
 ## Current status
 
-**Milestone: M0 (environment bootstrap).**
+**M0 + M1 complete.** Next: M2 (EDA notebook + data card).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
 - [x] `configs/micro_50m_8gb.yaml` (bfloat16, 4070-targeted)
 - [x] Python 3.12 venv + `requirements.txt` + `pyproject.toml`
 - [x] `src/config.py`, `src/utils.py`, `tests/test_env.py`, `tests/test_config.py`
-- [ ] First commit + public GitHub remote
-- [ ] M1 data pipeline
+- [x] First commit + public remote — <https://github.com/ArepaMan/sol>
+- [x] M1 data pipeline: `data/{prepare,train_tokenizer,tokenize}.py`, `src/data.py`
+- [ ] M2 EDA notebook + data card
 - [ ] M3 model / M4 training / M6 eval / M8 demo
+
+Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
+RTX 4070 Laptop (sm_89), 44 tests passing.
+
+**M1 measured numbers** (see `data/processed/stats.json`, `data/tokenized/meta.json`):
+train 1,748,358 docs / 357,852,786 tokens (14.58% exact-dup rate — TinyStories is
+genuinely repetitive, see the near-dedup note in `docs/PROJECT.md`), val 15,141 docs
+/ 2,956,183 tokens, zero cross-split leakage (hash-verified, not just counted).
+`max_train_tokens` in the config was lowered from the original 400M target to the
+measured 357,852,786 — see the comment in `configs/micro_50m_8gb.yaml`.
 
 ## Environment
 

@@ -21,9 +21,12 @@ Fine-tuning is faster but weaker signal for fundamentals. Sol prioritizes depth.
 
 **Primary:** [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories)
 
-**Corpus cap:** 400M tokens. Note this is the *corpus size*, not the number of tokens
-processed — at 40,000 iters × 32,768 tokens/step the model sees **1.31B tokens ≈ 3.3
-epochs** over that corpus. Wall-clock is measured in M4, not estimated here.
+**Corpus cap:** originally targeted at 400M tokens; **measured at 357,852,786** after
+cleaning, dedup, and encoding with the in-domain 32k BPE tokenizer (~4.13 chars/token —
+see `data/processed/stats.json`, `data/tokenized/meta.json`). Lowered honestly to the
+measured value rather than padded. Note this is the *corpus size*, not the number of
+tokens processed — at 40,000 iters × 32,768 tokens/step the model sees **1.31B tokens ≈
+3.66 epochs** over that corpus. Wall-clock is measured in M4, not estimated here.
 
 **Why not full corpus:** Diminishing returns for portfolio; enables data-scale ablation (100M vs 400M).
 
@@ -34,6 +37,17 @@ epochs** over that corpus. Wall-clock is measured in M4, not estimated here.
 3. Train BPE tokenizer (32k vocab)
 4. Encode to binary shards for training
 5. EDA notebook: token counts, length distribution, data card in README
+
+**M1 status:** done. Exact-dedup rate came in at 14.58% train / 28.67% validation —
+TinyStories is a synthetic, templated corpus, so this is a real property of the data,
+not a pipeline bug (verified: `tests/test_pipeline_artifacts.py` hash-checks
+disjointness and no-duplicates-within-train against the actual written files, not
+just prepare.py's self-reported counters). Near-dedup (`data/near_dedup.py`,
+MinHash + LSH banding) is implemented and unit-tested but was not run on the full
+corpus — the 14.58% train rate sits just under the 15% threshold that would have
+triggered it, and MinHash on 1.75M documents would materially extend the runtime
+for a marginal expected gain. Revisit if M5's val loss looks worse than the 2.8–3.2
+target and templated repeats look like a plausible cause.
 
 ## Model architecture
 

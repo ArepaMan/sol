@@ -1,0 +1,20 @@
+{
+  "vocab_size": 32000,
+  "dtype": "uint16",
+  "eot_id": 0,
+  "pad_id": 1,
+  "unk_id": 2,
+  "tokenizer_sha256": "8942ea08666a5c8d6cbd2e3b4cf65e9a99c87d01b49b9438af633365cb21cffe",
+  "splits": {
+    "train": {
+      "doc_count": 1748358,
+      "token_count": 357852786,
+      "path": "data\\tokenized\\train.bin"
+    },
+    "val": {
+      "doc_count": 15141,
+      "token_count": 2956183,
+      "path": "data\\tokenized\\val.bin"
+    }
+  }
+}

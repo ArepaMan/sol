@@ -8,9 +8,10 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚧 **M0 complete** — environment bootstrapped, spec corrected, config layer in place.
-Data pipeline (M1) is next. Nothing has been trained yet; every number below marked
-*target* is a target, not a result.
+🚧 **M0 + M1 complete** — environment bootstrapped, data pipeline done. TinyStories
+cleaned, deduped, tokenized: 1,748,358 train docs / 357,852,786 tokens, 15,141 val docs
+/ 2,956,183 tokens, zero cross-split leakage (hash-verified). EDA notebook (M2) is next.
+Nothing has been trained yet; every number below marked *target* is a target, not a result.
 
 Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) · Design rationale: [`docs/PROJECT.md`](docs/PROJECT.md) · Agent context: [`AGENTS.md`](AGENTS.md)
 

@@ -8,8 +8,14 @@
 # Scale, stated precisely (these are two different numbers):
 #   tokens per step   = batch_size * grad_accum * block_size = 4 * 16 * 512 = 32,768
 #   tokens processed  = 32,768 * max_iters = 1.31B
-#   corpus size       = max_train_tokens   = 400M
-#   => ~3.3 epochs over the corpus, NOT a "400M token run".
+#   corpus size       = max_train_tokens   = 357,852,786 (measured, M1)
+#   => ~3.66 epochs over the corpus, NOT a "400M token run".
+#
+# max_train_tokens was originally a 400M target. The actual cleaned+deduped
+# TinyStories train split, encoded with the in-domain 32k BPE tokenizer
+# (data/tokenizer/tokenizer.json, ~4.13 chars/token), yields 357,852,786
+# tokens — under the target. Per the M1 exit criterion this cap is set to the
+# measured value rather than padded to the original target.
 # Wall-clock is deliberately not asserted here; it is measured in M4
 # (src/benchmark.py) and recorded in experiments/000_benchmark/results.md.
 name: micro_50m_8gb
@@ -44,7 +50,7 @@ compile: false  # revisit in M4 benchmark — Triton on Windows is unreliable
 
 data:
   dataset: tinystories
-  max_train_tokens: 400000000
-  val_split: 0.05
+  max_train_tokens: 357852786  # measured, M1 — see comment above
+  val_split: 0.05  # informational only; native TinyStories val split is used (see docs/PROJECT.md)
 
 seed: 42

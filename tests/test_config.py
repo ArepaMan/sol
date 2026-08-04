@@ -31,8 +31,9 @@ def test_derived_scale_arithmetic():
     cfg = load_config(CONFIG_PATH)
     assert cfg.tokens_per_step == 4 * 16 * 512 == 32_768
     assert cfg.total_train_tokens == 32_768 * 40_000
-    # ~3.3 epochs over the 400M corpus — the distinction the original spec lost.
-    assert cfg.epochs == pytest.approx(3.28, abs=0.05)
+    # ~3.66 epochs over the measured 357.85M-token corpus (M1) — the
+    # distinction the original 400M-target spec lost.
+    assert cfg.epochs == pytest.approx(3.66, abs=0.05)
 
 
 def test_vocab_fits_uint16():

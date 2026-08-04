@@ -8,8 +8,8 @@ Legend: **[P]** = also touches the portfolio repo.
 
 | M | Name | Hands-on | Unattended | [P] |
 |---|------|----------|------------|-----|
-| 0 | Env bootstrap, spec correction, public repo | 2–3 h | — | ✅ |
-| 1 | Data pipeline + BPE tokenizer | 8–12 h | 1–2 h | |
+| 0 | ✅ Env bootstrap, spec correction, public repo | 2–3 h | — | ✅ |
+| 1 | ✅ Data pipeline + BPE tokenizer | 8–12 h | 1–2 h | |
 | 2 | EDA notebook + data card | 5–7 h | — | |
 | 3 | `src/model.py` hand-written + tests | 8–12 h | — | |
 | 4 | Training loop + smoke gates + benchmark | 8–10 h | — | |
@@ -58,25 +58,54 @@ before they propagate further (see "Spec corrections" below).
 
 ---
 
-## M1 — Data pipeline: download, clean, dedupe, tokenize, shard
+## M1 — Data pipeline: download, clean, dedupe, tokenize, shard ✅ done
 
 **Files:** `data/prepare.py` (NFKC normalise, length filter, SHA1 exact-dedup, optional
-MinHash near-dedup, writes `stats.json` with every counter), `data/train_tokenizer.py`
+MinHash near-dedup, writes `stats.json` with every counter), `data/near_dedup.py`
+(MinHash + LSH banding, salted-hash implementation — see below), `data/train_tokenizer.py`
 (32k byte-level BPE, **train split only — never val**), `data/tokenize.py` (→ `uint16`
 `.bin` shards + `meta.json`), `src/data.py` (`np.memmap` + `get_batch`),
-`tests/test_tokenizer.py`, `tests/test_data.py`.
+`tests/test_tokenizer.py`, `tests/test_data.py`, `tests/test_prepare.py`,
+`tests/test_pipeline_artifacts.py` (integration tests against the real generated files).
+
+**Decision made here:** TinyStories ships its own train/validation split (native, held
+out by the dataset authors) rather than one pool to carve 5% from. Used as-is;
+`config.data.val_split` is now informational only. See "Resolved decisions" above.
+
+**Measured results**
+
+| | train | validation |
+|---|---|---|
+| raw | 2,119,719 | 21,990 |
+| dropped (length/dup) | 371,361 | 6,849 |
+| kept | 1,748,358 | 15,141 |
+| tokens (32k BPE) | 357,852,786 | 2,956,183 |
+| exact-dup rate | 14.58% | 28.67% |
+| cross-split leakage | — | 0 (hash-verified) |
+
+`max_train_tokens` in the config was lowered from the 400M target to the measured
+357,852,786 — the exit criterion below, applied. Near-dedup was implemented and unit
+tested but not run on the full corpus: the train dup rate sits just under the 15%
+threshold that would have triggered it (see `docs/PROJECT.md`).
 
 **Exit criteria**
-- `meta.json` reports the real train-token count. TinyStories is ~470M GPT-2 tokens; an
-  in-domain 32k BPE yields fewer. **If you don't clear 400M, lower `max_train_tokens`
-  honestly** rather than padding.
-- Val split is document-level and provably disjoint (assert on the dedup hash sets)
-- `pytest tests/ -q` green
+- ✅ `meta.json` reports the real train-token count (357,852,786). Didn't clear the
+  400M target, so `max_train_tokens` was **lowered honestly** rather than padded.
+- ✅ Val split is document-level and provably disjoint — `tests/test_pipeline_artifacts.py`
+  recomputes hashes from the actual written files and checks the intersection is empty,
+  rather than trusting prepare.py's self-reported counter alone.
+- ✅ `pytest -q` green (44 tests, incl. real-artifact integration tests)
 
-**Risks.** Tokenizer bugs are silent and catastrophic — the round-trip test is the gate,
-plus an `arr.max() < vocab_size` assert before writing. Dedup can be over-aggressive on a
-synthetic corpus that is *legitimately* repetitive: log the dup rate before deleting, and
-if exact-dup > 15% raise the threshold and record the decision in the data card.
+**Risks, and what actually happened.** Tokenizer bugs are silent and catastrophic — hit
+one for real: the first `BpeTrainer` had no `initial_alphabet`, so bytes absent from a
+tiny test corpus (digits, uppercase, punctuation) silently fell back to `<|unk|>` instead
+of the lossless byte-level guarantee. The round-trip test caught it immediately; fix was
+one line (`initial_alphabet=pre_tokenizers.ByteLevel.alphabet()`). Also hit an int64
+overflow in the first MinHash implementation (`a * hash` with both operands near 2^61 —
+classic modular-hash mistake); replaced with salted BLAKE2B hashing per permutation,
+which uses Python's arbitrary-precision ints and can't overflow. Dedup was, as expected,
+high on this synthetic/templated corpus but not pathologically so — no action needed
+beyond documenting it in `docs/DATA_CARD.md` (M2).
 
 **Skills:** data pipeline (2), reproducibility (7).
 

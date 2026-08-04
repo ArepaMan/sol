@@ -18,11 +18,13 @@ mlruns/
 *.pth
 *.ckpt
 
-# Data
+# Data — exclude the large derived corpora, but keep the small JSON metadata
+# (stats.json, meta.json) committed: docs/DATA_CARD.md and scripts/export_spec.py
+# trace their numbers back to these files, so they need to be real artifacts,
+# not regenerated-and-hoped-identical.
 data/raw/
-data/processed/
-data/tokenized/
-*.bin
+data/processed/*.jsonl
+data/tokenized/*.bin
 *.arrow
 
 # IDE / OS

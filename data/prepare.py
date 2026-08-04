@@ -88,6 +88,31 @@ def _clean_split(
     return texts, hashes, stats
 
 
+def _remove_cross_split_leakage(
+    val_texts: list[str],
+    val_hashes: list[str],
+    train_hashes: list[str],
+) -> tuple[list[str], int]:
+    """Drops any val text whose hash also appears in train.
+
+    Callers must clean train and validation with *independent* seen_hashes
+    sets before calling this — sharing one set (train populated first) would
+    mean any cross-split duplicate was already silently absorbed into val's
+    own exact-dup counter, making this function structurally unable to find
+    anything regardless of the true leakage rate. See the comment at the
+    call site in main() and tests/test_prepare.py for the regression test.
+    """
+    train_hash_set = set(train_hashes)
+    kept_texts = []
+    leaked = 0
+    for text, h in zip(val_texts, val_hashes):
+        if h in train_hash_set:
+            leaked += 1
+        else:
+            kept_texts.append(text)
+    return kept_texts, leaked
+
+
 def _write_jsonl(path: Path, split_name: str, texts: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
@@ -131,29 +156,33 @@ def main(argv: list[str] | None = None) -> None:
         ds["validation"] if args.limit is None else ds["validation"].select(range(min(args.limit, len(ds["validation"]))))
     )
 
-    seen_hashes: set[str] = set()
+    # Deliberately SEPARATE hash sets for the per-split dedup pass. An earlier
+    # version shared one set across both calls (train populated first), which
+    # made the cross-split leakage check below structurally unable to find
+    # anything: any val doc matching a train hash was already silently
+    # absorbed into val's own "exact_dup" counter before the leakage loop
+    # ever ran, so "0 leaked" was guaranteed regardless of the true rate.
+    # tests/test_pipeline_artifacts.py::test_val_disjoint_from_train_by_hash
+    # independently re-verifies the *outcome* (no hash overlap in the written
+    # files) either way — but only this version's *accounting* is honest
+    # about which bucket a dropped doc actually belongs to.
     train_texts, train_hashes, train_stats = _clean_split(
-        train_rows, "train", args.min_chars, args.max_chars, seen_hashes
+        train_rows, "train", args.min_chars, args.max_chars, set()
     )
     val_texts, val_hashes, val_stats = _clean_split(
-        val_rows, "validation", args.min_chars, args.max_chars, seen_hashes
+        val_rows, "validation", args.min_chars, args.max_chars, set()
     )
 
-    # Cross-split leakage: a val story whose hash also landed in train (added to
-    # seen_hashes first, since train was processed first) was already dropped as
-    # an "exact dup" above. Report that count under its real name instead of
-    # burying it in the generic exact-dup bucket.
-    train_hash_set = set(train_hashes)
-    leaked = 0
-    keep_val_texts: list[str] = []
-    for text, h in zip(val_texts, val_hashes):
-        if h in train_hash_set:
-            leaked += 1
-            continue
-        keep_val_texts.append(text)
-    val_texts = keep_val_texts
+    # Now the real cross-split leakage check: a val story whose hash also
+    # appears in train (and was NOT already caught as a within-val duplicate,
+    # since the two passes above used independent hash sets).
+    val_texts, leaked = _remove_cross_split_leakage(val_texts, val_hashes, train_hashes)
     val_stats.dropped_cross_split_leakage = leaked
     val_stats.kept -= leaked
+    # char_count_kept was accumulated inside _clean_split, before leakage
+    # removal — recompute from the final kept set rather than leave it
+    # counting chars from documents that were just dropped.
+    val_stats.char_count_kept = sum(len(t) for t in val_texts)
 
     train_dup_rate = train_stats._rate(train_stats.dropped_exact_dup)
     if train_dup_rate > 0.15:

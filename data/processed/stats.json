@@ -4,7 +4,7 @@
   "max_chars": 2000,
   "near_dedup_enabled": false,
   "seed": 42,
-  "generated_at": "2026-08-04T15:23:13Z",
+  "generated_at": "2026-08-04T15:51:58Z",
   "train": {
     "raw_count": 2119719,
     "dropped_too_short": 230,
@@ -20,12 +20,12 @@
     "raw_count": 21990,
     "dropped_too_short": 0,
     "dropped_too_long": 545,
-    "dropped_exact_dup": 6304,
+    "dropped_exact_dup": 0,
     "dropped_near_dup": 0,
-    "dropped_cross_split_leakage": 0,
+    "dropped_cross_split_leakage": 6304,
     "kept": 15141,
     "char_count_kept": 12308857,
-    "exact_dup_rate": 0.2867
+    "exact_dup_rate": 0.0
   },
   "notes": "Uses TinyStories' native train/validation split rather than a custom val_split carve-out (see docs/PROJECT.md 'Resolved decisions'). config.data.val_split is informational only for this dataset."
 }

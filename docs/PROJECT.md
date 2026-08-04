@@ -38,16 +38,28 @@ tokens processed — at 40,000 iters × 32,768 tokens/step the model sees **1.31
 4. Encode to binary shards for training
 5. EDA notebook: token counts, length distribution, data card in README
 
-**M1 status:** done. Exact-dedup rate came in at 14.58% train / 28.67% validation —
-TinyStories is a synthetic, templated corpus, so this is a real property of the data,
-not a pipeline bug (verified: `tests/test_pipeline_artifacts.py` hash-checks
-disjointness and no-duplicates-within-train against the actual written files, not
-just prepare.py's self-reported counters). Near-dedup (`data/near_dedup.py`,
-MinHash + LSH banding) is implemented and unit-tested but was not run on the full
-corpus — the 14.58% train rate sits just under the 15% threshold that would have
-triggered it, and MinHash on 1.75M documents would materially extend the runtime
-for a marginal expected gain. Revisit if M5's val loss looks worse than the 2.8–3.2
-target and templated repeats look like a plausible cause.
+**M1 status:** done. Exact-dedup rate: 14.58% train (within-split — a real property of
+this synthetic, templated corpus, not a pipeline bug). Validation's own internal dup
+rate is 0% — but **28.67% of raw validation documents turned out to be exact
+duplicates of a train document** (cross-split leakage). That distinction was wrong in
+an earlier version of `data/prepare.py`: train and validation were deduped against a
+single shared hash set, which silently folded every cross-split duplicate into
+validation's "exact_dup" counter before a separate leakage-check pass ever ran — so
+that pass structurally reported 0 leakage regardless of the true rate. Fixed by
+deduping each split against its own hash set, then running a real cross-split check
+afterward; `tests/test_prepare.py` now pins both the fixed behavior and the original
+bug pattern as regression tests. The end *result* (no document text shared between
+`train.jsonl` and `val.jsonl`) was already correct and independently
+hash-verified throughout (`tests/test_pipeline_artifacts.py`) — only the accounting
+of *why* documents were dropped was wrong. See `docs/DATA_CARD.md` for the full
+writeup and the practical implication for val-loss interpretation.
+
+Near-dedup (`data/near_dedup.py`, MinHash + LSH banding) is implemented and
+unit-tested but was not run on the full corpus — the 14.58% train rate sits just
+under the 15% threshold that would have triggered it, and MinHash on 1.75M documents
+would materially extend the runtime for a marginal expected gain. Revisit if M5's val
+loss looks worse than the 2.8–3.2 target and templated repeats look like a plausible
+cause.
 
 ## Model architecture
 

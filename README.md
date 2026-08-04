@@ -8,10 +8,17 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚧 **M0 + M1 complete** — environment bootstrapped, data pipeline done. TinyStories
-cleaned, deduped, tokenized: 1,748,358 train docs / 357,852,786 tokens, 15,141 val docs
-/ 2,956,183 tokens, zero cross-split leakage (hash-verified). EDA notebook (M2) is next.
-Nothing has been trained yet; every number below marked *target* is a target, not a result.
+🚧 **M0 + M1 + M2 complete** — environment bootstrapped, data pipeline done, EDA +
+data card written. TinyStories cleaned, deduped, tokenized: 1,748,358 train docs /
+357,852,786 tokens, 15,141 val docs / 2,956,183 tokens. 99.74% of train documents fit
+whole within `block_size=512` (measured p99 = 479 tokens). Model architecture (M3) is
+next. Nothing has been trained yet; every number below marked *target* is a target,
+not a result.
+
+See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
+real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
+to be 0% internal duplication and 28.67% exact overlap with train (cross-split leakage,
+now filtered) — a data-quality finding, not just a pipeline stat.
 
 Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) · Design rationale: [`docs/PROJECT.md`](docs/PROJECT.md) · Agent context: [`AGENTS.md`](AGENTS.md)
 

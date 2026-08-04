@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from data.clean import clean_text, content_hash, is_acceptable_length
 from data.near_dedup import find_near_duplicates
+from data.prepare import _clean_split, _remove_cross_split_leakage
 
 
 def test_clean_text_strips_control_chars_keeps_newline():
@@ -62,6 +63,60 @@ def test_near_dedup_flags_near_identical_text():
     assert 1 in dropped  # near_dup dropped as a duplicate of base
     assert 2 not in dropped  # distinct text survives
     assert 0 not in dropped  # first occurrence is always kept
+
+
+def test_cross_split_leakage_detected_with_independent_hash_sets():
+    """Regression test for a real bug: prepare.py originally passed one
+    shared `seen_hashes` set to both _clean_split calls (train first), so any
+    val doc matching a train hash was silently absorbed into val's own
+    exact-dup counter before the leakage check ever ran — making leakage
+    structurally always report 0, regardless of the true rate.
+    """
+    shared_text = "Lily found a shiny red ball in the park and played all afternoon."
+    train_rows = [{"text": shared_text}, {"text": "A distinct train-only story about a fox."}]
+    val_rows = [
+        {"text": shared_text},  # true cross-split duplicate
+        {"text": "A distinct val-only story about a dragon."},
+    ]
+
+    # Independent sets — the fixed behavior.
+    train_texts, train_hashes, train_stats = _clean_split(train_rows, "train", 10, 2000, set())
+    val_texts, val_hashes, val_stats = _clean_split(val_rows, "validation", 10, 2000, set())
+
+    # Before the leakage pass, the shared_text duplicate is still present in
+    # val (independent sets don't cross-filter) — this is what makes the
+    # leakage check downstream actually able to find something.
+    assert shared_text in val_texts
+    assert val_stats.dropped_exact_dup == 0
+
+    kept, leaked = _remove_cross_split_leakage(val_texts, val_hashes, train_hashes)
+    assert leaked == 1
+    assert shared_text not in kept
+    assert "A distinct val-only story about a dragon." in kept
+
+
+def test_cross_split_leakage_is_undetectable_with_a_shared_hash_set():
+    """Documents the bug pattern itself: reproduces the original (buggy)
+    shared-set call and shows the leakage check is structurally blind to it —
+    guarding against this regressing back in.
+    """
+    shared_text = "Lily found a shiny red ball in the park and played all afternoon."
+    train_rows = [{"text": shared_text}]
+    val_rows = [{"text": shared_text}]
+
+    shared_seen_hashes: set[str] = set()
+    _, train_hashes, _ = _clean_split(train_rows, "train", 10, 2000, shared_seen_hashes)
+    val_texts, val_hashes, val_stats = _clean_split(
+        val_rows, "validation", 10, 2000, shared_seen_hashes
+    )
+
+    # The duplicate was already absorbed into val's own exact-dup counter —
+    # it never reaches the leakage check at all.
+    assert val_texts == []
+    assert val_stats.dropped_exact_dup == 1
+
+    kept, leaked = _remove_cross_split_leakage(val_texts, val_hashes, train_hashes)
+    assert leaked == 0  # structurally blind, by construction — this is the bug
 
 
 def test_near_dedup_keeps_all_distinct_short_stories():

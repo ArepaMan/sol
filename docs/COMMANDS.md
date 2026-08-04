@@ -30,6 +30,12 @@ py -3.12 -m venv .venv
 The `--index-url` on the first install is **not optional**. Without it pip resolves the
 CPU-only wheel and every GPU path fails much later with a confusing error.
 
+> **Always invoke scripts under `data/` as modules** (`python -m data.tokenize`), never
+> by path (`python data/tokenize.py`). Running by path puts `data/` on `sys.path[0]`,
+> and `data/tokenize.py` then shadows the stdlib `tokenize` module — anything that
+> imports it transitively (e.g. `inspect`, pulled in by `tqdm`) fails with a confusing
+> circular-import error. Every command below already uses the `-m` form.
+
 Verify:
 
 ```powershell

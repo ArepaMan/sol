@@ -103,6 +103,19 @@ def test_first_document_round_trips_through_the_real_tokenizer(meta):
     assert tokenizer.decode(first_doc_ids) == first_text
 
 
+def test_char_count_kept_matches_actual_written_files(stats):
+    """Regression test: char_count_kept was originally accumulated inside
+    _clean_split, *before* cross-split leakage removal dropped ~6,300 val
+    docs — so the stat kept counting characters from documents that were
+    never actually written to val.jsonl. Verify the stat matches reality."""
+    for split_name, filename in (("train", "train.jsonl"), ("validation", "val.jsonl")):
+        total_chars = 0
+        with (PROCESSED_DIR / filename).open(encoding="utf-8") as f:
+            for line in f:
+                total_chars += len(json.loads(line)["text"])
+        assert stats[split_name]["char_count_kept"] == total_chars
+
+
 def test_dedup_rate_within_sane_bounds(stats):
     # TinyStories is synthetic and genuinely repetitive (see docs/DATA_CARD.md)
     # — a high dup rate is expected, not a bug. This just catches the

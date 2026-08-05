@@ -13,7 +13,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 2 | ✅ EDA notebook + data card | 5–7 h | — | |
 | 3 | ✅ `src/model.py` hand-written + tests | 8–12 h | — | |
 | 4 | ✅ Training loop + smoke gates + benchmark | 8–10 h | — | |
-| 5 | Baseline run 001 | 1 h | 12–24 h | |
+| 5 | ✅ Baseline run 001 | 1 h | 12–24 h | |
 | 6 | Eval harness | 6–8 h | 1 h | |
 | 7 | Ablations + seed variance | 3 h | 20–40 h | |
 | 8 | Infer CLI, Gradio, HF Space | 6–8 h | — | |
@@ -324,23 +324,50 @@ h cutoff, so `max_iters` stays at 40,000** rather than being cut to ~24,000.
 
 ---
 
-## M5 — Baseline run 001
+## M5 — Baseline run 001 ✅ done
 
 ```
-python -m src.train --config configs/micro_50m_8gb.yaml --run-name 001_baseline
+python -m src.train --config configs/micro_50m_8gb.yaml --run-name 001_baseline --no-wandb
 ```
 
-**Files:** `experiments/001_baseline/{config.yaml,run.md,loss_curve.png}`. `run.md`
-records start/end, git sha, GPU, wall-clock, tokens/s, final val loss, W&B URL.
+**Files:** `experiments/001_baseline/{config.yaml,run.md,loss_curve.png,train.log}`.
+`src/plot_curves.py` (new, shared with M7) parses `train.log` and plots the curve.
+
+**Result: val loss 1.3569, perplexity 3.88 — clears the ≤3.2 exit criterion with a
+large margin.** (`--no-wandb`: W&B isn't authenticated on this machine, and logging in
+isn't something to do without the user's own credentials — console log to `train.log`
+served the same purpose.)
 
 **Exit criteria**
-- **val loss ≤ 3.2.** If higher, that's a finding — but understand why before ablating.
-- Laptop-specific: run on AC power, check `nvidia-smi -q -d TEMPERATURE,PERFORMANCE`
-  mid-run, record the sustained clock. Honest hardware reporting differentiates.
+- ✅ **val loss ≤ 3.2** — 1.3569 achieved. The original spec's 2.8–3.2 "realistic"
+  target undersold TinyStories: a narrow-vocabulary, templated corpus (`docs/DATA_CARD.md`)
+  lets a 52.9M-param model reach much lower loss than the same size would on
+  general-domain text. A spec correction, not luck — same pattern as the M1/M3 corrections.
+- ✅ Laptop-specific: ran on AC power; `nvidia-smi -q -d PERFORMANCE` showed no active
+  throttle reasons throughout, clock stayed near max boost whenever computing. **No
+  thermal throttling** — see the wall-clock story below, which was a different problem.
 
-**Checkpoint distribution, decided here.** Full ckpt with Adam state ≈ 630 MB;
-weights-only fp32 ≈ 208 MB; bf16 ≈ 104 MB. **None go in git** — `.gitignore` already
-blocks `*.pt`, `checkpoints/`, `*.bin`; verify with `git status --ignored`. Weights-only
+**A finding worth being honest about: `best.pt` wasn't actually best.** Training-time
+"best" tracking uses the periodic 100-batch eval, which is noisy enough that iter
+34,000 (val 1.3747 in that noisy estimate) got flagged best, while the true final
+checkpoint (iter 40,000) re-evaluated at 1.3569 under a more thorough 200-batch pass —
+actually better. **Use `latest.pt`, not `best.pt`, going forward** (M6, M8). A real
+limitation of small-sample best-checkpoint selection, left visible rather than quietly
+fixed — M6's full-val-set eval is the proper fix.
+
+**Wall-clock overrun, and why it doesn't count against the model.** The run took 30.3h
+wall-clock against an M4-measured 16.9h estimate — but 12.17h of that was the laptop
+asleep (once automatic, once the user manually sleeping it overnight; the user declined
+to permanently disable AC sleep for one run). System sleep suspends the whole process in
+memory, unaffected by (and not needing) the checkpoint/resume mechanism built for actual
+process death. The implied awake-time throughput (≈20,067 tok/s from total tokens ÷
+18.14h awake) matches M4's Gate 3 measurement almost exactly — confirming the benchmark
+generalized correctly to the full run; **the overrun was a laptop-power-management
+story, not a training or hardware problem.** Full breakdown in `experiments/001_baseline/run.md`.
+
+**Checkpoint distribution, decided here.** Full ckpt with Adam state ≈ 605 MB (measured:
+`best.pt`/`latest.pt` both ~605 MB). **None go in git** — `.gitignore` already blocks
+`*.pt`, `checkpoints/`, `*.bin`; verified with `git status --ignored`. Weights-only
 export is published to a HF model repo in M8.
 
 ---

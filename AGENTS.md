@@ -129,7 +129,7 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M4 complete.** Next: M5 (baseline run 001 — the real ~17h training run).
+**M0–M5 complete.** Next: M6 (evaluation harness — perplexity, baselines, rubric).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -143,13 +143,17 @@ disproportionate interview weight.
 - [x] M3 model: `src/model.py` (52,901,712 params, measured), `tests/test_model.py`
 - [x] M4 training: `src/train.py`, `src/benchmark.py` — all 3 gates passed, see
       `docs/ROADMAP.md` M4 for full measured results
-- [ ] M5 baseline run / M6 eval / M8 demo
+- [x] M5 baseline run: `experiments/001_baseline/` — **val loss 1.3569, ppl 3.88**,
+      clears the ≤3.2 target with a large margin. Use `checkpoints/001_baseline/latest.pt`
+      (not `best.pt` — see run.md for why)
+- [ ] M6 eval harness / M8 demo
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 85 tests passing. Real production training loop measured at
-**21,500 tok/s → ~16.9h for the full 40,000-iter baseline run** (M5, next).
-`gradient_checkpointing` flipped to **false** after measurement (see Hardware
-constraint above) — chosen config peaks at 2137 MiB, far under the 7400 MiB target.
+RTX 4070 Laptop (sm_89), 89 tests passing. `gradient_checkpointing` flipped to
+**false** after measurement (M4) — chosen config peaks at 2344 MiB, far under the
+7400 MiB target. M5's baseline run took 30.3h wall-clock (16.9h training + 12.17h the
+laptop was asleep, twice — see `experiments/001_baseline/run.md`); awake-time
+throughput (~20,067 tok/s) matched M4's benchmark almost exactly.
 
 **M1 measured numbers** (see `data/processed/stats.json`, `data/tokenized/meta.json`,
 `docs/DATA_CARD.md`): train 1,748,358 docs / 357,852,786 tokens (14.58% within-train

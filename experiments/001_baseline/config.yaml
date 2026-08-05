@@ -1,0 +1,76 @@
+# Sol ~52M params — 8 GB VRAM budget
+#
+# Hardware target: NVIDIA GeForce RTX 4070 Laptop GPU (Ada Lovelace, sm_89, 8188 MiB)
+# Precision: bfloat16 — Ada supports BF16, which needs no GradScaler and none of
+# the loss-scale debugging that float16 requires. (An earlier draft of this spec
+# targeted an RTX 2070 Super and assumed float16 was forced; that was wrong.)
+#
+# Scale, stated precisely (these are two different numbers):
+#   tokens per step   = batch_size * grad_accum * block_size = 4 * 16 * 512 = 32,768
+#   tokens processed  = 32,768 * max_iters = 1.31B
+#   corpus size       = max_train_tokens   = 357,852,786 (measured, M1)
+#   => ~3.66 epochs over the corpus, NOT a "400M token run".
+#
+# max_train_tokens was originally a 400M target. The actual cleaned+deduped
+# TinyStories train split, encoded with the in-domain 32k BPE tokenizer
+# (data/tokenizer/tokenizer.json, ~4.13 chars/token), yields 357,852,786
+# tokens — under the target. Per the M1 exit criterion this cap is set to the
+# measured value rather than padded to the original target.
+# Wall-clock is deliberately not asserted here; it is measured in M4
+# (src/benchmark.py) and recorded in experiments/000_benchmark/results.md.
+#
+# n_embd=592 (not 512): with weight tying and this config's vocab/depth/context,
+# n_embd=512 measures at 41.8M params — a ~20% gap from the "~52M" the project
+# is named and branded around everywhere (README, portfolio). Untying weights
+# would hit 58.2M but reverses an already-made, deliberate design decision
+# (see docs/PROJECT.md "Resolved decisions") for no good reason. 592 (=74*8,
+# so head_dim=74 stays an integer) measures at 52.9M tied — 1.73% off target —
+# while keeping n_layer=8, block_size=512, vocab_size=32000, and weight tying
+# exactly as documented everywhere else. See tests/test_model.py for the
+# measured-param-count gate.
+name: micro_50m_8gb
+
+model:
+  n_layer: 8
+  n_head: 8
+  n_embd: 592
+  block_size: 512
+  vocab_size: 32000
+  dropout: 0.0
+  bias: false
+
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 16
+  max_iters: 40000
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  warmup_iters: 1000
+  lr_decay_iters: 40000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 500
+  eval_iters: 100
+  log_interval: 25
+  checkpoint_interval: 2000
+
+precision: bfloat16
+# gradient_checkpointing: false (not the originally-"required" true) — M4's
+# benchmark measured batch_size=4 without checkpointing at 2137 MiB peak
+# (~21,500 tok/s), vs 1460 MiB with it on (~17,000 tok/s, ~26% slower). Both
+# are far under the 7400 MiB target, so the "8GB requires checkpointing"
+# assumption in the original spec predates knowing this model's true (much
+# smaller than guessed) footprint. Checkpointing becomes genuinely necessary
+# only around batch_size 24-32 (measured: b=32 without it doesn't cleanly
+# OOM — it silently spills into slow shared/system memory, ~6.6x slowdown,
+# a real footgun if batch size is ever scaled up without re-checking this).
+# See experiments/000_benchmark/results.md.
+gradient_checkpointing: false
+compile: false  # Triton not installed on Windows — measured, not assumed; see results.md
+
+data:
+  dataset: tinystories
+  max_train_tokens: 357852786  # measured, M1 — see comment above
+  val_split: 0.05  # informational only; native TinyStories val split is used (see docs/PROJECT.md)
+
+seed: 42

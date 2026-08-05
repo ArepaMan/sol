@@ -143,13 +143,32 @@ Target: peak VRAM < 7400 MiB, leaving ~800 MiB headroom for Windows WDDM. **Neve
 a peak-VRAM number alone above ~8000 MiB on this setup without checking for the
 shared-memory-spill signature above.**
 
-## Expected results (realistic)
+## Results (M5 baseline, measured — the original "Expected results" table below is kept for record)
+
+| Metric | Original target | **Measured (001_baseline)** |
+|--------|--------|--------|
+| Val loss | ~2.8–3.2 | **1.3569** |
+| Perplexity | ~15–25 | **3.88** |
+| Generation | Coherent short stories; some repetition | Not yet qualitatively evaluated — M6 |
+
+The original targets were a guess made before any data existed to measure against, same
+as the token-count and param-count corrections in M1/M3. TinyStories' narrow, templated
+vocabulary (`docs/DATA_CARD.md`) lets a model this size reach much lower loss than the
+same size would on general-domain text — the gap is a property of the dataset, not a
+signal that something is wrong. Full run details, including an honest note that
+`best.pt`'s training-time selection was noisy and `latest.pt` is actually the better
+checkpoint, in `experiments/001_baseline/run.md`.
+
+<details>
+<summary>Original "Expected results (realistic)" table, pre-measurement</summary>
 
 | Metric | Target |
 |--------|--------|
 | Val loss | ~2.8–3.2 |
 | Perplexity | ~15–25 |
 | Generation | Coherent short stories; some repetition |
+
+</details>
 
 ## Planned ablations
 

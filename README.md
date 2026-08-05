@@ -8,17 +8,13 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚧 **M0–M4 complete** — environment bootstrapped, data pipeline done, EDA + data card
-written, model built and tested, training loop built and all three smoke gates passed.
-TinyStories: 1,748,358 train docs / 357,852,786 tokens, 15,141 val docs / 2,956,183
-tokens. `src/model.py` measures at **52,901,712 params**. Gate 1 (overfit one batch)
-reached loss 0.0224; Gate 2 (VRAM/throughput sweep) settled `gradient_checkpointing:
-false` and `compile: false` by measurement, not assumption — chosen config peaks at
-2137 MiB, tokens/s scales to **~16.9h for the real 40,000-iter baseline run**; Gate 3
-(resume) verified a checkpoint round-trip, including RNG state. See
-[`docs/ROADMAP.md`](docs/ROADMAP.md) M4 for full results. The actual baseline run (M5)
-is next — nothing has been trained end-to-end yet, and every number below marked
-*target* is a target, not a result.
+✅ **M0–M5 complete** — environment, data pipeline, EDA, model, training loop, and the
+first real training run are all done. **Baseline run 001: val loss 1.3569, perplexity
+3.88** — clears the ≤3.2 target by a wide margin (the original target was a
+pre-measurement guess; TinyStories' narrow, templated vocabulary makes much lower loss
+achievable than general-domain text would — see `experiments/001_baseline/run.md`).
+`src/model.py` measures at **52,901,712 params**. M6 (evaluation harness — perplexity
+with a proper CI, baselines, qualitative rubric) is next.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -38,11 +34,11 @@ rather than a large one fine-tuned and demoed on vibes.
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Architecture | 8 layers, 8 heads, 592 embd, 512 context | **52.9M params, measured**; fits 8 GB comfortably (2137 MiB peak) without checkpointing |
+| Architecture | 8 layers, 8 heads, 592 embd, 512 context | **52.9M params, measured**; fits 8 GB comfortably (2344 MiB peak) without checkpointing |
 | Vocab | 32k byte-level BPE, trained in-domain | Standard for small LMs; train-split only |
 | Precision | **BF16** | Ada supports it — no GradScaler, no loss-scale debugging |
 | Implementation | Hand-written `src/model.py` | The architecture code *is* the deliverable |
-| Data | TinyStories, deduped, 400M-token cap | ~3.3 epochs at 40k iters |
+| Data | TinyStories, deduped, 357.85M-token cap (measured) | ~3.66 epochs at 40k iters |
 
 **What gets measured:** validation perplexity with a bootstrap CI against three baselines
 (uniform, unigram, trigram), an anchored 1–5 generation rubric scored blind, automatic
@@ -51,16 +47,18 @@ against real run-to-run noise.
 
 ## Results
 
-Not yet trained. Targets from [`docs/PROJECT.md`](docs/PROJECT.md):
+Baseline run 001 (`experiments/001_baseline/`), measured on the final checkpoint:
 
-| Metric | Target |
-|--------|--------|
-| Val loss | 2.8–3.2 |
-| Perplexity | 15–25 |
-| Peak VRAM | < 7400 MiB |
-| Generation | Coherent short stories, some repetition |
+| Metric | Original target | **Measured** |
+|--------|--------|--------|
+| Val loss | 2.8–3.2 | **1.3569** |
+| Perplexity | 15–25 | **3.88** |
+| Peak VRAM | < 7400 MiB | **2344 MiB** |
+| Generation | Coherent short stories, some repetition | Not yet qualitatively evaluated — M6 |
 
-This table is replaced with measured numbers — and baselines to compare them against — in M9.
+Baselines to compare against (uniform/unigram/trigram) and a qualitative rubric land in M6.
+
+![Baseline loss curve](experiments/001_baseline/loss_curve.png)
 
 ## How to run
 

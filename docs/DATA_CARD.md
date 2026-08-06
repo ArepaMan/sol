@@ -132,6 +132,15 @@ constrained-vocabulary corpus rather than open-domain text.
 - **High template reuse** (14.58% exact-duplicate rate) — a byproduct of
   LLM generation from a fixed prompt template, not organic repetition in
   human writing.
+- **6.20% of train documents (108,464 / 1,748,358) contain a mojibake
+  artifact** — curly quotes double-encoded as CP1252-through-UTF-8 (`â€œ`,
+  `â€TM` instead of `"`/`'`), confirmed by grepping `data/processed/train.jsonl`
+  directly (M6). Inherited from TinyStories' own upstream generation
+  pipeline, not introduced by `data/clean.py` or `data/tokenize.py` — the
+  tokenizer round-trips this text exactly, and Sol-001 reproduces the
+  pattern faithfully because it's genuinely present at training time (see
+  `docs/LIMITATIONS.md`). Not cleaned in this pass; a normalization step is
+  a concrete next-step candidate for `data/clean.py`.
 
 ## Intended use
 

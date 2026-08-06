@@ -129,7 +129,7 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M5 complete.** Next: M6 (evaluation harness — perplexity, baselines, rubric).
+**M0–M6 complete.** Next: M7 (ablations + seed variance).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -143,10 +143,20 @@ disproportionate interview weight.
 - [x] M3 model: `src/model.py` (52,901,712 params, measured), `tests/test_model.py`
 - [x] M4 training: `src/train.py`, `src/benchmark.py` — all 3 gates passed, see
       `docs/ROADMAP.md` M4 for full measured results
-- [x] M5 baseline run: `experiments/001_baseline/` — **val loss 1.3569, ppl 3.88**,
-      clears the ≤3.2 target with a large margin. Use `checkpoints/001_baseline/latest.pt`
-      (not `best.pt` — see run.md for why)
-- [ ] M6 eval harness / M8 demo
+- [x] M5 baseline run: `experiments/001_baseline/` — **val loss 1.3569, ppl 3.88**
+      (periodic 200-batch re-eval), clears the ≤3.2 target with a large margin. Use
+      `checkpoints/001_baseline/latest.pt` (not `best.pt` — see run.md for why)
+- [x] M6 eval harness: `src/eval.py`, `src/baselines.py`, `src/generate_samples.py`,
+      `eval/prompts.jsonl` (60), `eval/rubric_scores.csv`, `docs/RUBRIC.md`,
+      `docs/LIMITATIONS.md`, `tests/test_eval.py` (19 tests). **Full-val-set Sol-001
+      perplexity: 3.719, 95% CI [3.693, 3.745]** — supersedes M5's periodic-eval number
+      (both tell the same story). Beats trigram (23.4), unigram (379.0), uniform (32000)
+      baselines by a wide margin. Rubric: grammar 4.00/5, coherence 3.15/5 (the real
+      limiting factor — entity drift over long generations), on-topic 5.00/5 in-domain vs
+      1.47/5 out-of-domain (expected). Found and traced (not assumed) a mojibake artifact
+      in 6.20% of TinyStories' own train documents — inherited from upstream, not a bug
+      in this repo. Full writeup: `eval/results.md`, `docs/ROADMAP.md` M6 section.
+- [ ] M7 ablations / M8 demo
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
 RTX 4070 Laptop (sm_89), 89 tests passing. `gradient_checkpointing` flipped to

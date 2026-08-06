@@ -143,21 +143,27 @@ Target: peak VRAM < 7400 MiB, leaving ~800 MiB headroom for Windows WDDM. **Neve
 a peak-VRAM number alone above ~8000 MiB on this setup without checking for the
 shared-memory-spill signature above.**
 
-## Results (M5 baseline, measured — the original "Expected results" table below is kept for record)
+## Results (M5 baseline + M6 full evaluation, measured — the original "Expected results" table below is kept for record)
 
-| Metric | Original target | **Measured (001_baseline)** |
+| Metric | Original target | **Measured** |
 |--------|--------|--------|
-| Val loss | ~2.8–3.2 | **1.3569** |
-| Perplexity | ~15–25 | **3.88** |
-| Generation | Coherent short stories; some repetition | Not yet qualitatively evaluated — M6 |
+| Val loss (M5, periodic 200-batch eval) | ~2.8–3.2 | **1.3569** |
+| Val perplexity (M6, full val set, document-level) | ~15–25 | **3.719, 95% CI [3.693, 3.745]** |
+| vs trigram / unigram / uniform baselines | beat them | **3.719 vs 23.4 / 379.0 / 32000** |
+| Rubric: grammar / coherence / on-topic / repetition (n=60) | — | **4.00 / 3.15 / 4.12 / 3.98** out of 5 |
+| Generation | Coherent short stories; some repetition | Grammatical; entity/character drift over ~150 tokens is the binding constraint, not grammar or n-gram repetition |
 
 The original targets were a guess made before any data existed to measure against, same
 as the token-count and param-count corrections in M1/M3. TinyStories' narrow, templated
 vocabulary (`docs/DATA_CARD.md`) lets a model this size reach much lower loss than the
 same size would on general-domain text — the gap is a property of the dataset, not a
-signal that something is wrong. Full run details, including an honest note that
-`best.pt`'s training-time selection was noisy and `latest.pt` is actually the better
-checkpoint, in `experiments/001_baseline/run.md`.
+signal that something is wrong. Full M5 run details, including an honest note that
+`best.pt`'s training-time selection was noisy, in `experiments/001_baseline/run.md`;
+**M6's full-val-set eval resolves that ambiguity** (`eval/results.md`) — `latest.pt`
+(iter 40,000) really is the better checkpoint. M6 also traced (not assumed) a
+data-quality finding: 6.20% of TinyStories' own train documents carry a mojibake
+artifact inherited from the dataset's upstream pipeline, reproduced faithfully by
+Sol-001 in a handful of generations — see `docs/DATA_CARD.md` and `docs/LIMITATIONS.md`.
 
 <details>
 <summary>Original "Expected results (realistic)" table, pre-measurement</summary>
@@ -200,23 +206,33 @@ disclosed in `docs/ABLATIONS.md` rather than papered over.
 - Repetition measured objectively: distinct-2 / distinct-3 n-gram ratios, max repeated
   substring length — so the manual rubric is not the only evidence
 
-### Baselines (not optional — a perplexity number means nothing without a floor)
+### Baselines (not optional — a perplexity number means nothing without a floor) — measured, M6
 
-| Baseline | Expected ppl |
-|----------|--------------|
-| Uniform over vocab | 32,000 |
-| Unigram frequency | — |
-| Trigram + add-k backoff | — |
-| Sol | target 15–25 |
+| Baseline | Expected ppl | **Measured ppl** |
+|----------|--------------|-------------------|
+| Uniform over vocab | 32,000 | **32,000.000** |
+| Unigram frequency | — | **379.010** |
+| Trigram + stupid backoff (Brants et al. 2007) | — | **23.425** |
+| Sol-001 | target 15–25 | **3.719** |
 
-### Qualitative
+Trigram uses stupid backoff, not add-k backoff as originally planned — simpler, standard
+for n-gram baselines at this scale, and doesn't need a full normalized distribution since
+only the probability of the *actual* next val token is ever queried
+(`src/baselines.py`). Fit on a 10M-token prefix of train, not the full 357.85M-token
+corpus — a documented scope decision, not a shortcut: a full-corpus trigram table needs
+an on-disk sparse structure out of scope for a reference floor.
 
-- 60 fixed prompts, categorised (story-start, dialogue, continuation, out-of-domain probe)
-- Rubric with **anchored descriptions per score**: fluency, coherence, repetition,
-  prompt-adherence (1–5) — see `docs/RUBRIC.md`
-- Scored **blind** (runs shuffled, ids hidden). Single rater is the main validity
-  limitation and is stated as such.
-- Save sample outputs per checkpoint in `experiments/`
+### Qualitative — measured, M6
+
+- 60 fixed prompts, categorised (15 each: story-start, dialogue, continuation,
+  out-of-domain probe) — `eval/prompts.jsonl`
+- Rubric with **anchored descriptions per score**: grammar, coherence, on-topic,
+  repetition (1–5) — `docs/RUBRIC.md`
+- **Single rater, stated as such** (not literally blind across models — there is only one
+  model). `docs/RUBRIC.md` explains exactly what "blind" means here and what it doesn't;
+  this is the main validity limitation of the qualitative scores and is not hidden.
+- Sample outputs saved per checkpoint: `eval/generations.jsonl`, scores in
+  `eval/rubric_scores.csv`, aggregate in `eval/results.md`
 
 ## Deployment
 

@@ -1,0 +1,61 @@
+id,category,grammar,coherence,on_topic,repetition,notes
+story-start-01,story-start,5,4,5,5,clean single-beat story; mask subplot dropped but resolves honestly (matches RUBRIC.md example A)
+story-start-02,story-start,5,4,5,4,coherent dog/ball arc; minor shake-shake wordiness
+story-start-03,story-start,5,4,5,5,solid adventure arc, ends on a natural cliffhanger
+story-start-04,story-start,4,3,5,4,pronoun slip ("she had grown" referring to mother)
+story-start-05,story-start,5,3,5,4,rabbit appears with no introduction, contradicts prompt's cat+mouse-only setup
+story-start-06,story-start,4,3,5,4,two unrelated stories concatenated with no boundary punctuation (EOT not stopped on)
+story-start-07,story-start,5,5,5,5,excellent full arc: setup, problem, resolution, consistent characters
+story-start-08,story-start,4,3,5,4,bird description contradicts itself (disappears then reappears "with a long neck")
+story-start-09,story-start,4,3,5,3,shrinking-balloon logic is confused; some repeated "so small" phrasing
+story-start-10,story-start,4,3,5,4,"branch for the story" is a non sequitur; otherwise followable
+story-start-11,story-start,5,4,5,5,best distinct-n in the batch; snowman payoff lands
+story-start-12,story-start,5,4,5,4,consistent duck/fish/shadow arc
+story-start-13,story-start,3,2,5,3,repeats a garbled token ("understand the yet") that breaks meaning
+story-start-14,story-start,4,3,5,4,causality is dream-logic (pulling a tail makes a flower bloom) but internally consistent tone
+story-start-15,story-start,4,3,5,4,pronoun reference ("he asked if he could be his friend") is ambiguous
+dialogue-01,dialogue,4,3,5,3,fixates on "red shoes" motif three times; slightly repetitive
+dialogue-02,dialogue,4,3,5,4,"mixer" introduced with no connection to the established "train" noise
+dialogue-03,dialogue,5,4,5,4,good sharing/honesty arc with a clean dialogue payoff
+dialogue-04,dialogue,3,2,5,4,"we get sour... wait for the right number of worms" is close to nonsensical
+dialogue-05,dialogue,4,3,5,2,"thanked the dog and the dog" duplicated-noun error; noticeably repeats "lost my owner"
+dialogue-06,dialogue,5,4,5,3,coherent breakfast scene; repeats "so hungry/so excited" pattern
+dialogue-07,dialogue,4,3,5,5,pivot to "let's go to the bathroom" as a non sequitur resolution to being cold
+dialogue-08,dialogue,4,4,5,3,consistent slide/puddle play; "let's go" repeated several times
+dialogue-09,dialogue,4,4,5,4,owl/cave arc with an explicit (slightly clunky) moral
+dialogue-10,dialogue,4,3,5,5,referent confusion ("thanked the boy" instead of the mother)
+dialogue-11,dialogue,4,3,5,4,internal contradiction: ball "disappeared" then "appeared in the bush"
+dialogue-12,dialogue,5,4,5,4,thunder/comfort arc holds together well
+dialogue-13,dialogue,4,4,5,4,mostly coherent; "a little bit weak" is an odd word choice for tired
+dialogue-14,dialogue,3,2,5,3,"color the air has changed" is an incoherent explanation; duplicated "ice cream ice cream"
+dialogue-15,dialogue,5,4,5,5,clean apology/friendship arc
+continuation-01,continuation,4,3,5,5,abrupt jump into an unrelated second story with no separator
+continuation-02,continuation,4,4,5,4,kitten renamed "small animal" mid-story; otherwise coherent
+continuation-03,continuation,3,2,5,4,character-name break: "Tom's mother" appears though the established characters are Ben and his sister
+continuation-04,continuation,4,3,5,4,cow appears with no setup, unrelated to the sheep-counting premise
+continuation-05,continuation,5,4,5,5,best thematic match to its prompt (ocean painting, uncle's gift pays off)
+continuation-06,continuation,3,2,5,4,"put the sun back in the sky to keep warm" is not coherent physically or narratively
+continuation-07,continuation,4,3,5,4,awkwardly continues the prompt's dangling quotation mark
+continuation-08,continuation,3,4,5,4,mojibake curly-quote artifact ("â€œDonâ€TMt worry") — inherited from ~6.2% of TinyStories train docs, not a tokenizer/decode bug (see eval/results.md)
+continuation-09,continuation,5,5,5,5,best generation in the set: full causally-consistent arc with a dialogue payoff ("Woof!")
+continuation-10,continuation,3,2,5,4,"he understood why his mother had to hate him" — jarring, inappropriate word choice
+continuation-11,continuation,4,3,5,4,"he kept tired" is ungrammatical; repeats "he kept" pattern
+continuation-12,continuation,5,4,5,4,whimsical but internally consistent shrinking-clock arc
+continuation-13,continuation,4,2,5,4,protagonist named "Mia" in the prompt becomes "Lily" mid-story
+continuation-14,continuation,4,4,5,4,coherent within each of its two concatenated stories
+continuation-15,continuation,4,4,5,4,mouse/farmer/hay arc mostly coherent, minor logic wobble on how hay helps him reach
+ood-01,out-of-domain,4,3,2,4,keeps a vague finance-flavored clause ("driven by a lot") for one beat before fully reverting to story-mode
+ood-02,out-of-domain,4,3,1,4,no attempt at code register; reverts immediately to a fantasy story
+ood-03,out-of-domain,4,3,1,4,no attempt at historical register; immediate revert
+ood-04,out-of-domain,3,3,2,4,completes the physics sentence grammatically ("cannot both be successful") before reverting
+ood-05,out-of-domain,3,3,3,2,best register match of the OOD set (stays in a cooking/recipe frame); but literally repeats "one teaspoon of baking soda" back to back
+ood-06,out-of-domain,3,2,1,4,abrupt nonsensical close ("must file something in the forest. The End.") plus the same inherited mojibake curly-quote pattern later in the generation
+ood-07,out-of-domain,3,3,2,4,vaguely disaster/loss-flavored ("hurricane" ruining a toy) before reverting; missing-space story-bleed ("he wasOnce upon a time")
+ood-08,out-of-domain,3,3,2,4,lexical pun on "train" (train station) shows shallow anchoring to the prompt's word, not its meaning
+ood-09,out-of-domain,4,3,2,3,reinterprets "patient" as a personality trait rather than a medical patient; repeats the word "patient" heavily
+ood-10,out-of-domain,4,2,1,4,jumps straight to an unrelated moral-of-the-story statement
+ood-11,out-of-domain,3,2,1,4,absurd non sequitur ("energy from the stove", "dishes got tired of the water")
+ood-12,out-of-domain,4,3,1,4,grammatical but a total non sequitur ("due to the rare plant")
+ood-13,out-of-domain,4,2,1,4,terse, vague continuation with no legal register at all
+ood-14,out-of-domain,3,2,1,4,jarring non sequitur ("set the following parameters: an elderly lady")
+ood-15,out-of-domain,4,2,1,4,grammatical but no historical register whatsoever ("the bird's routine")

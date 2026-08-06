@@ -8,13 +8,11 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-✅ **M0–M5 complete** — environment, data pipeline, EDA, model, training loop, and the
-first real training run are all done. **Baseline run 001: val loss 1.3569, perplexity
-3.88** — clears the ≤3.2 target by a wide margin (the original target was a
-pre-measurement guess; TinyStories' narrow, templated vocabulary makes much lower loss
-achievable than general-domain text would — see `experiments/001_baseline/run.md`).
-`src/model.py` measures at **52,901,712 params**. M6 (evaluation harness — perplexity
-with a proper CI, baselines, qualitative rubric) is next.
+✅ **M0–M6 complete** — environment, data pipeline, EDA, model, training loop, baseline
+run, and the full evaluation harness are all done. **Sol-001: val perplexity 3.719, 95%
+CI [3.693, 3.745]** on the full 15,141-document val set — vs a trigram baseline at 23.4
+and a unigram baseline at 379.0 (`eval/results.md`). `src/model.py` measures at
+**52,901,712 params**. M7 (ablations + seed variance) is next.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -47,16 +45,18 @@ against real run-to-run noise.
 
 ## Results
 
-Baseline run 001 (`experiments/001_baseline/`), measured on the final checkpoint:
+Baseline run 001 (`experiments/001_baseline/`), evaluated on the full val set (M6):
 
 | Metric | Original target | **Measured** |
 |--------|--------|--------|
-| Val loss | 2.8–3.2 | **1.3569** |
-| Perplexity | 15–25 | **3.88** |
+| Val perplexity | 15–25 | **3.719** [3.693, 3.745] (95% CI) |
 | Peak VRAM | < 7400 MiB | **2344 MiB** |
-| Generation | Coherent short stories, some repetition | Not yet qualitatively evaluated — M6 |
+| vs trigram baseline | beat it | **3.719 vs 23.4** |
+| Rubric: grammar / coherence / repetition | — | **4.00 / 3.15 / 3.98** out of 5 (n=60) |
+| Generation | Coherent short stories, some repetition | Grammatical; entity/character drift over ~150 tokens is the main flaw — see `docs/LIMITATIONS.md` |
 
-Baselines to compare against (uniform/unigram/trigram) and a qualitative rubric land in M6.
+Full breakdown, baselines table, per-length-bucket perplexity, and the qualitative
+rubric: [`eval/results.md`](eval/results.md).
 
 ![Baseline loss curve](experiments/001_baseline/loss_curve.png)
 
@@ -80,15 +80,19 @@ Full command reference: [`docs/COMMANDS.md`](docs/COMMANDS.md).
 sol/
 ├── configs/     # YAML training configs — single source of truth for every number
 ├── data/        # prepare.py, train_tokenizer.py, tokenize.py, eda.ipynb
-├── src/         # config, model, train, eval, infer
+├── src/         # config, model, train, eval, baselines, generate_samples, infer
+├── eval/        # prompts.jsonl, generations.jsonl, rubric_scores.csv, results.md
 ├── experiments/ # benchmark + ablation runs and results
 ├── app/         # Gradio demo (deployed to a HF Space)
-├── tests/       # env, config, tokenizer, data, model, training
+├── tests/       # env, config, tokenizer, data, model, training, eval
 └── docs/        # ROADMAP, PROJECT, DATA_CARD, RUBRIC, LIMITATIONS
 ```
 
 ## What I'd do next
 
-Tracked in `docs/LIMITATIONS.md` as results land. Current known trade-offs: learned
-positional embeddings rather than RoPE, 512-token context, LayerNorm + GELU rather than
-RMSNorm + SwiGLU, and a single-rater qualitative rubric.
+Tracked in [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) as results land. Top three right
+now: (1) coherence — named entities drift across ~150-token generations, the binding
+constraint per M6's rubric (3.15/5 vs 4.00/5 grammar); (2) a mojibake artifact inherited
+from 6.2% of TinyStories' own training documents, confirmed by grepping the raw corpus,
+not yet cleaned; (3) learned positional embeddings rather than RoPE, LayerNorm + GELU
+rather than RMSNorm + SwiGLU — both real architecture trade-offs, not yet ablated.

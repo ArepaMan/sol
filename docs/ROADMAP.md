@@ -14,7 +14,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 3 | ✅ `src/model.py` hand-written + tests | 8–12 h | — | |
 | 4 | ✅ Training loop + smoke gates + benchmark | 8–10 h | — | |
 | 5 | ✅ Baseline run 001 | 1 h | 12–24 h | |
-| 6 | Eval harness | 6–8 h | 1 h | |
+| 6 | ✅ Eval harness | 6–8 h | 1 h | |
 | 7 | Ablations + seed variance | 3 h | 20–40 h | |
 | 8 | Infer CLI, Gradio, HF Space | 6–8 h | — | |
 | 9 | Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
@@ -390,6 +390,49 @@ per-length-bucket slice), `src/baselines.py` (uniform / unigram / trigram-with-b
 automatic metrics as the objective backstop.
 
 **Skills:** evaluation (5), honest limitations (9).
+
+### M6 — measured results
+
+Full writeup: [`eval/results.md`](../eval/results.md), scores:
+[`eval/rubric_scores.csv`](../eval/rubric_scores.csv), repetition:
+[`eval/repetition_summary.md`](../eval/repetition_summary.md), limitations rollup:
+[`docs/LIMITATIONS.md`](LIMITATIONS.md).
+
+| Model | Perplexity | 95% CI (10k-replicate document bootstrap) |
+|---|---|---|
+| uniform | 32000.000 | [32000.000, 32000.000] |
+| unigram | 379.010 | [377.499, 380.497] |
+| trigram (stupid backoff) | 23.425 | [23.246, 23.600] |
+| **Sol-001** | **3.719** | **[3.693, 3.745]** |
+
+Evaluated on the **full val set** (15,141 docs, 2,955,739 tokens, 28 truncated to
+`block_size`), not a periodic training-time sample — this supersedes the 200-batch
+re-eval number from M5's `run.md` (ppl 3.88) with a more thorough, full-coverage,
+per-document measurement (ppl 3.719). Both numbers tell the same story (Sol-001 clears
+its target by a wide margin); M6's is the one to cite going forward.
+
+**Deviation from the original scope, stated plainly:** the trigram baseline is fit on a
+10M-token prefix of train, not the full 357.85M-token corpus — a documented scope
+decision (`src/baselines.py`), not a shortcut hidden from the results. **Model eval
+batch size is 4, not a larger value** — 16 and 64 both measured OOM on the 8 GB card
+(the 32k-vocab logits tensor, promoted to float32 inside `F.cross_entropy`, dominates
+memory at `block_size=512`); 4 matches the training config's own micro-batch size, which
+is not a coincidence.
+
+**60/60 prompts scored** (15 each: story-start, dialogue, continuation, out-of-domain),
+single-rater per `docs/RUBRIC.md`. Rubric mean: grammar 4.00/5, coherence **3.15/5**
+(the real limiting factor — entity/character drift over ~150-token generations, not
+grammar), on-topic 5.00/5 in-domain vs **1.47/5 out-of-domain** (the correct, expected
+failure mode for a model with zero non-narrative training exposure). Automatic backstop:
+distinct-2 0.933, distinct-3 0.984 overall — the rubric's qualitative repetition score
+(3.98/5) and the automatic metrics broadly agree, per the M6 risk note.
+
+**A real, traced-not-assumed finding:** 6.20% of TinyStories train documents
+(108,464/1,748,358) contain a mojibake artifact inherited from the dataset's own
+upstream pipeline (curly quotes double-encoded via CP1252-as-UTF-8) — confirmed by
+grepping the raw corpus, not guessed from the symptom. Sol-001 reproduces it faithfully
+in a handful of the 60 generations. Not a bug in this repo (tokenizer round-trips it
+exactly); see `docs/DATA_CARD.md` and `docs/LIMITATIONS.md`.
 
 ---
 

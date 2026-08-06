@@ -1,0 +1,60 @@
+{"id": "story-start-01", "category": "story-start", "prompt": "Once upon a time, there was a little girl named Lily."}
+{"id": "story-start-02", "category": "story-start", "prompt": "One sunny day, a small dog named Max went for a walk in the park."}
+{"id": "story-start-03", "category": "story-start", "prompt": "There once was a boy who loved to"}
+{"id": "story-start-04", "category": "story-start", "prompt": "In a small house near the forest, a rabbit named Ben lived with his mother."}
+{"id": "story-start-05", "category": "story-start", "prompt": "Once upon a time, a cat and a mouse were the best of friends."}
+{"id": "story-start-06", "category": "story-start", "prompt": "Tim woke up one morning and found something strange in his backyard."}
+{"id": "story-start-07", "category": "story-start", "prompt": "A long time ago, in a village near the sea, there lived a fisherman."}
+{"id": "story-start-08", "category": "story-start", "prompt": "Sara and her brother were playing outside when they saw"}
+{"id": "story-start-09", "category": "story-start", "prompt": "Once upon a time, there was a big red balloon."}
+{"id": "story-start-10", "category": "story-start", "prompt": "Every day, the little bird flew to the tallest tree to sing."}
+{"id": "story-start-11", "category": "story-start", "prompt": "It was a cold winter morning when Anna decided to build a snowman."}
+{"id": "story-start-12", "category": "story-start", "prompt": "Once there was a small boat that lived on a big blue lake."}
+{"id": "story-start-13", "category": "story-start", "prompt": "Deep in the jungle, a young elephant named Ellie was learning to"}
+{"id": "story-start-14", "category": "story-start", "prompt": "Once upon a time, in a garden full of flowers, a bee named Buzz"}
+{"id": "story-start-15", "category": "story-start", "prompt": "There was once a little robot who wanted to make a friend."}
+{"id": "dialogue-01", "category": "dialogue", "prompt": "Tom looked at his sister and said, \"Can we go to the park today?\" She smiled and said, \""}
+{"id": "dialogue-02", "category": "dialogue", "prompt": "\"What is that noise?\" asked the little mouse. His mother replied, \""}
+{"id": "dialogue-03", "category": "dialogue", "prompt": "\"I found a shiny rock!\" shouted Ben. His friend ran over and said, \""}
+{"id": "dialogue-04", "category": "dialogue", "prompt": "The teacher asked the children, \"Who wants to feed the fish today?\" Lily raised her hand and said, \""}
+{"id": "dialogue-05", "category": "dialogue", "prompt": "\"Why are you sad?\" asked the dog. The cat sighed and said, \""}
+{"id": "dialogue-06", "category": "dialogue", "prompt": "Mom called from the kitchen, \"Dinner is ready!\" Jack yelled back, \""}
+{"id": "dialogue-07", "category": "dialogue", "prompt": "\"Can I have a cookie?\" asked Emma. Her grandmother laughed and said, \""}
+{"id": "dialogue-08", "category": "dialogue", "prompt": "\"Look at the rainbow!\" said Sam, pointing at the sky. His friend gasped and said, \""}
+{"id": "dialogue-09", "category": "dialogue", "prompt": "The little bird asked the owl, \"How do you see in the dark?\" The owl answered, \""}
+{"id": "dialogue-10", "category": "dialogue", "prompt": "\"I do not want to share my toys,\" said the boy. His mother knelt down and said, \""}
+{"id": "dialogue-11", "category": "dialogue", "prompt": "\"Where did the ball go?\" asked Kate. Her brother pointed and said, \""}
+{"id": "dialogue-12", "category": "dialogue", "prompt": "\"I am scared of the thunder,\" whispered the puppy. The old dog said gently, \""}
+{"id": "dialogue-13", "category": "dialogue", "prompt": "\"Can you help me build a sandcastle?\" asked Mia. Her dad smiled and said, \""}
+{"id": "dialogue-14", "category": "dialogue", "prompt": "\"Why is the sky blue?\" asked the little boy. His father thought for a moment and said, \""}
+{"id": "dialogue-15", "category": "dialogue", "prompt": "\"I am sorry I broke your toy,\" said Alex. His friend said, \""}
+{"id": "continuation-01", "category": "continuation", "prompt": "The little girl picked up the puppy and hugged it tightly. She had wanted a puppy for a very long time, and now"}
+{"id": "continuation-02", "category": "continuation", "prompt": "The two friends walked through the forest, looking for the lost kitten. Suddenly, they heard a small sound coming from behind a bush, and"}
+{"id": "continuation-03", "category": "continuation", "prompt": "Ben was very proud of the tower he had built out of blocks. But then his little sister ran into the room and"}
+{"id": "continuation-04", "category": "continuation", "prompt": "The sun was setting over the hill, and the sheep were slowly walking back to the barn. The farmer counted them one by one, and"}
+{"id": "continuation-05", "category": "continuation", "prompt": "Lucy loved to paint pictures of the ocean, even though she had never seen the sea. One day, her uncle gave her a very special gift:"}
+{"id": "continuation-06", "category": "continuation", "prompt": "The little squirrel had collected acorns all summer to prepare for winter. When the first snow fell, he opened his little den and"}
+{"id": "continuation-07", "category": "continuation", "prompt": "Every night before bed, Grandpa told a story about a magic tree. Tonight, he began, \"Long ago, there was a tree that could\""}
+{"id": "continuation-08", "category": "continuation", "prompt": "The children built a fort out of blankets and pillows in the living room. Inside, they pretended it was a"}
+{"id": "continuation-09", "category": "continuation", "prompt": "Max the dog loved chasing his tail, but one day he chased it right into"}
+{"id": "continuation-10", "category": "continuation", "prompt": "The little duckling had lost his way from his mother. He waddled along the riverbank until"}
+{"id": "continuation-11", "category": "continuation", "prompt": "It had rained all week, so the children were very excited when they finally saw"}
+{"id": "continuation-12", "category": "continuation", "prompt": "The old clock in the hallway had stopped ticking many years ago. One morning, without any warning, it"}
+{"id": "continuation-13", "category": "continuation", "prompt": "Mia planted a tiny seed in her garden and watered it every day. Weeks later, she was amazed to see"}
+{"id": "continuation-14", "category": "continuation", "prompt": "The kite soared higher and higher into the sky until suddenly the string"}
+{"id": "continuation-15", "category": "continuation", "prompt": "The little mouse was too small to reach the cheese on the table, so he decided to"}
+{"id": "ood-01", "category": "out-of-domain", "prompt": "The quarterly earnings report showed a 12% increase in revenue driven by"}
+{"id": "ood-02", "category": "out-of-domain", "prompt": "To implement a binary search tree in Python, you first need to define a"}
+{"id": "ood-03", "category": "out-of-domain", "prompt": "The Treaty of Westphalia in 1648 marked the end of"}
+{"id": "ood-04", "category": "out-of-domain", "prompt": "According to quantum mechanics, a particle's position and momentum cannot both be"}
+{"id": "ood-05", "category": "out-of-domain", "prompt": "The recipe calls for two cups of flour, one teaspoon of baking soda, and"}
+{"id": "ood-06", "category": "out-of-domain", "prompt": "Under the new tax code, self-employed individuals must file"}
+{"id": "ood-07", "category": "out-of-domain", "prompt": "The stock market fell sharply today after the central bank announced"}
+{"id": "ood-08", "category": "out-of-domain", "prompt": "In order to train a neural network, the gradient of the loss function is computed using"}
+{"id": "ood-09", "category": "out-of-domain", "prompt": "The patient presented with a fever of 101 degrees and was prescribed"}
+{"id": "ood-10", "category": "out-of-domain", "prompt": "The senator's proposed legislation would require companies to disclose"}
+{"id": "ood-11", "category": "out-of-domain", "prompt": "Photosynthesis converts carbon dioxide and water into glucose using energy from"}
+{"id": "ood-12", "category": "out-of-domain", "prompt": "The GDP of the country grew by 3.2% last quarter, largely due to"}
+{"id": "ood-13", "category": "out-of-domain", "prompt": "The court ruled that the defendant was not liable because"}
+{"id": "ood-14", "category": "out-of-domain", "prompt": "To configure the server, edit the YAML file and set the following parameters:"}
+{"id": "ood-15", "category": "out-of-domain", "prompt": "The history of the Roman Empire's decline can be traced to several factors, including"}

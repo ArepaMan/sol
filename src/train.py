@@ -195,7 +195,7 @@ def main(argv: list[str] | None = None) -> None:
     print(f"device: {describe_device()}")
     print(f"run: {run_name}  precision: {cfg.precision}  max_iters: {cfg.training.max_iters}")
 
-    dataset = BinDataset(args.data_dir, seed=cfg.seed)
+    dataset = BinDataset(args.data_dir, seed=cfg.seed, max_train_tokens=cfg.data.max_train_tokens)
     model = GPT(cfg.model, gradient_checkpointing=cfg.gradient_checkpointing).to(device)
     n_params = count_params(model)
     print(f"model: {human_count(n_params)} params ({n_params:,})")

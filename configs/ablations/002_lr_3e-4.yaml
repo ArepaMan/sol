@@ -1,0 +1,49 @@
+# M7 ablation 002 — learning rate sweep, arm 2/3 (baseline LR, shortened run).
+#
+# This run does TRIPLE duty, deliberately, to save ~1/3 of the ablation
+# compute budget instead of running three separate but identical configs:
+#   1. 002's "middle" learning-rate arm (3e-4, same as the full baseline run)
+#   2. 003's "full data" arm (max_train_tokens = the full measured corpus —
+#      identical to 003_data_100m.yaml except for that one field)
+#   3. 004's seed=42 arm (the seed-variance sweep's first of three seeds)
+# All three ablations' results.md point back at this one run's checkpoint
+# rather than re-running the identical config three times under different
+# names — see docs/ROADMAP.md M7 for why this is safe (config+seed fully
+# determine the run; nothing about *which ablation is asking* changes what
+# gets trained).
+name: ablation_002_lr_3e-4
+
+model:
+  n_layer: 8
+  n_head: 8
+  n_embd: 592
+  block_size: 512
+  vocab_size: 32000
+  dropout: 0.0
+  bias: false
+
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 16
+  max_iters: 8000
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  warmup_iters: 1000
+  lr_decay_iters: 8000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 500
+  eval_iters: 100
+  log_interval: 25
+  checkpoint_interval: 2000
+
+precision: bfloat16
+gradient_checkpointing: false
+compile: false
+
+data:
+  dataset: tinystories
+  max_train_tokens: 357852786
+  val_split: 0.05
+
+seed: 42

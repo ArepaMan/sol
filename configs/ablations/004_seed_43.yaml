@@ -1,0 +1,40 @@
+# M7 ablation 004 — seed variance, arm 2/3.
+# Identical to configs/ablations/002_lr_3e-4.yaml (which supplies seed=42's
+# arm) except for seed. See that file's header for why this run's config is
+# otherwise the "shared" baseline-equivalent short run.
+name: ablation_004_seed_43
+
+model:
+  n_layer: 8
+  n_head: 8
+  n_embd: 592
+  block_size: 512
+  vocab_size: 32000
+  dropout: 0.0
+  bias: false
+
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 16
+  max_iters: 8000
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  warmup_iters: 1000
+  lr_decay_iters: 8000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 500
+  eval_iters: 100
+  log_interval: 25
+  checkpoint_interval: 2000
+
+precision: bfloat16
+gradient_checkpointing: false
+compile: false
+
+data:
+  dataset: tinystories
+  max_train_tokens: 357852786
+  val_split: 0.05
+
+seed: 43

@@ -1,0 +1,38 @@
+# M7 ablation 002 — learning rate sweep, arm 3/3 (high).
+# See 002_lr_1e-4.yaml for the shared rationale (reduced iters, fixed warmup).
+name: ablation_002_lr_1e-3
+
+model:
+  n_layer: 8
+  n_head: 8
+  n_embd: 592
+  block_size: 512
+  vocab_size: 32000
+  dropout: 0.0
+  bias: false
+
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 16
+  max_iters: 8000
+  learning_rate: 1.0e-3
+  min_lr: 1.0e-4
+  warmup_iters: 1000
+  lr_decay_iters: 8000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 500
+  eval_iters: 100
+  log_interval: 25
+  checkpoint_interval: 2000
+
+precision: bfloat16
+gradient_checkpointing: false
+compile: false
+
+data:
+  dataset: tinystories
+  max_train_tokens: 357852786
+  val_split: 0.05
+
+seed: 42

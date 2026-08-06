@@ -94,3 +94,35 @@ def test_missing_split_file_raises(tokenized_dir):
     ds = BinDataset(tokenized_dir, seed=0)
     with pytest.raises(FileNotFoundError):
         ds.get_batch("test", batch_size=2, block_size=8, device=torch.device("cpu"))
+
+
+# ---------------------------------------------------------------------------
+# max_train_tokens (M7 data-scale ablation)
+# ---------------------------------------------------------------------------
+
+def test_max_train_tokens_caps_train_sampling_range(tokenized_dir):
+    cap = 40  # << N_TOKENS
+    ds = BinDataset(tokenized_dir, seed=0, max_train_tokens=cap)
+    for _ in range(200):  # enough draws that an uncapped sampler would almost surely exceed cap
+        x, _ = ds.get_batch("train", batch_size=8, block_size=8, device=torch.device("cpu"))
+        assert x.max().item() < cap
+
+
+def test_max_train_tokens_does_not_cap_val(tokenized_dir):
+    ds = BinDataset(tokenized_dir, seed=0, max_train_tokens=40)
+    saw_beyond_cap = False
+    for _ in range(50):
+        x, _ = ds.get_batch("val", batch_size=8, block_size=8, device=torch.device("cpu"))
+        if x.max().item() >= 40:
+            saw_beyond_cap = True
+            break
+    assert saw_beyond_cap  # val should still be free to sample from the full N_TOKENS range
+
+
+def test_max_train_tokens_none_is_unrestricted(tokenized_dir):
+    """Passing the full measured corpus size (as configs/micro_50m_8gb.yaml does)
+    must be a true no-op — this is what keeps M0-M6's baseline behavior
+    unchanged now that the cap is actually enforced."""
+    ds_capped = BinDataset(tokenized_dir, seed=0, max_train_tokens=N_TOKENS)
+    ds_uncapped = BinDataset(tokenized_dir, seed=0, max_train_tokens=None)
+    assert len(ds_capped._array("train")) == len(ds_uncapped._array("train")) == N_TOKENS

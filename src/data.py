@@ -18,19 +18,37 @@ import torch
 class BinDataset:
     """Random-offset sampler over data/tokenized/{split}.bin."""
 
-    def __init__(self, tokenized_dir: str | Path, seed: int | None = None):
+    def __init__(
+        self,
+        tokenized_dir: str | Path,
+        seed: int | None = None,
+        max_train_tokens: int | None = None,
+    ):
+        """`max_train_tokens`, if given, caps the *train* split to its first
+        N tokens (val is never capped — evaluation should always see the full
+        val set). Through M5/M6 this was purely descriptive on `SolConfig`
+        (used only to compute `epochs`); M7's data-scale ablation (100M vs
+        the full ~357.85M-token corpus) needed it to actually restrict
+        sampling, so it's wired in here. Passing the full measured corpus
+        size (357,852,786, `configs/micro_50m_8gb.yaml`'s default) is a
+        no-op — confirmed equal to `meta.json`'s train token_count, so this
+        doesn't change M0-M6's baseline behavior."""
         self._dir = Path(tokenized_dir)
         with (self._dir / "meta.json").open("r", encoding="utf-8") as f:
             self.meta = json.load(f)
         self._arrays: dict[str, np.memmap] = {}
         self._rng = np.random.default_rng(seed)
+        self._max_train_tokens = max_train_tokens
 
     def _array(self, split: str) -> np.memmap:
         if split not in self._arrays:
             path = self._dir / f"{split}.bin"
             if not path.exists():
                 raise FileNotFoundError(f"{path} missing — run `python -m data.tokenize` first")
-            self._arrays[split] = np.memmap(path, dtype=np.uint16, mode="r")
+            arr = np.memmap(path, dtype=np.uint16, mode="r")
+            if split == "train" and self._max_train_tokens is not None:
+                arr = arr[: self._max_train_tokens]
+            self._arrays[split] = arr
         return self._arrays[split]
 
     def get_rng_state(self) -> dict:

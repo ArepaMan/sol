@@ -132,7 +132,26 @@ separate deploy repo to sync, which is one real advantage over the Space route.
    | Branch | `master` |
    | Main file path | `app/streamlit_app.py` |
 
-4. Pick the subdomain (`sol` if free) and deploy.
+4. **Open "Advanced settings" and set Python to 3.12.** Not optional — see below.
+5. Pick the subdomain — minimum 6 characters, so `sol` is rejected; `sol-52m`
+   is what this deploys as.
+
+### Two build failures, both hit on the first real attempt
+
+**Community Cloud defaults to Python 3.14.** torch 2.6.0 publishes wheels for
+3.9–3.13 only, so the resolve dies with `no wheels with a matching Python ABI
+tag`. The error text points at the package index rather than at the Python
+version, which sends you looking in the wrong place. There is no `runtime.txt`
+equivalent here: the Python version is chosen in **Advanced settings at deploy
+time**, and changing it afterwards means deleting and recreating the app.
+
+**A bare `torch==2.6.0` installs the CUDA build even with the CPU index listed.**
+`--extra-index-url` is additive, not preferential — pip finds 2.6.0 on PyPI
+first and stops looking. That is an ~800 MB download and ~2.5 GB installed, on
+an app with a 1 GB memory budget. The fix is pinning **`torch==2.6.0+cpu`**: the
+`+cpu` local-version tag exists only on the PyTorch index, so requesting it is
+what actually forces the small wheel. Easy to miss locally, because the machine
+you develop on is usually one that *wants* the CUDA wheel.
 
 **Why `app/requirements.txt` is the file that gets installed:** Community Cloud
 looks for a dependency file in the repo root *or* in the entrypoint's directory.

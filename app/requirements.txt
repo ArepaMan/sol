@@ -6,8 +6,19 @@
 # The single biggest lever here is torch: the default PyPI wheel bundles ~2.5 GB
 # of CUDA libraries that a CPU-only host can never use. The CPU index below is
 # ~200 MB instead — the difference between a fast cold start and a timeout.
+#
+# The `+cpu` local-version tag is load-bearing, not decoration. With a bare
+# `torch==2.6.0` and an --extra-index-url, pip finds 2.6.0 on PyPI first and
+# installs the CUDA build anyway — the CPU index gets consulted only for
+# versions PyPI doesn't have. `+cpu` exists *only* on the PyTorch index, so
+# pinning it is what actually forces the small wheel.
+#
+# Python version matters here too: torch 2.6.0 ships wheels for 3.9-3.13 only.
+# Streamlit Community Cloud now defaults to 3.14, which has no matching ABI tag
+# and fails to resolve. Set Python to **3.12** in the deploy's Advanced settings
+# — it is the version this repo's tests run under. See docs/DEPLOY.md.
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.6.0
+torch==2.6.0+cpu
 
 # Everything src/infer.py + src/config.py + src/model.py actually import.
 tokenizers==0.21.0

@@ -6,8 +6,9 @@
 # Space YAML header for exactly that case. See docs/DEPLOY.md.
 #
 # The deployed app is app/streamlit_app.py; its deps are app/requirements.txt.
+# See app/requirements.txt on why `+cpu` is pinned rather than a bare 2.6.0.
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.6.0
+torch==2.6.0+cpu
 
 tokenizers==0.21.0
 numpy==2.2.1

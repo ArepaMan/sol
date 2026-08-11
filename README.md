@@ -36,7 +36,7 @@ real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" tur
 to be 0% internal duplication and 28.67% exact overlap with train (cross-split leakage,
 now filtered) — a data-quality finding, not just a pipeline stat.
 
-Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) · Design rationale: [`docs/PROJECT.md`](docs/PROJECT.md) · **Interview notes:** [`docs/INTERVIEW_NOTES.md`](docs/INTERVIEW_NOTES.md) · Agent context: [`AGENTS.md`](AGENTS.md)
+Full plan: [`docs/ROADMAP.md`](docs/ROADMAP.md) · QA: [`docs/QA_CHECKLIST.md`](docs/QA_CHECKLIST.md) · Design rationale: [`docs/PROJECT.md`](docs/PROJECT.md) · **Interview notes:** [`docs/INTERVIEW_NOTES.md`](docs/INTERVIEW_NOTES.md) · Agent context: [`AGENTS.md`](AGENTS.md)
 
 Every number quoted in this README is generated into [`docs/spec.json`](docs/spec.json) by
 `scripts/export_spec.py` and guarded by `tests/test_spec_drift.py` — edit a config without

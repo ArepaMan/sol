@@ -99,6 +99,20 @@ was measured, not just asserted, and points at the artifact that backs it.
   CPU-only torch wheel, import-time model loading, and an in-UI warning) —
   see `docs/DEPLOY.md`. The honest fix for a limitation you can't remove is
   to tell the user about it in the UI, which the demo does.
+- **The free deployment tier has a 1 GB RAM ceiling, and the app sits at
+  roughly 60% of it.** Measured CPU-only: bare Python 20 MB → +torch 386 MB →
+  +streamlit 415 MB → **+model 786 MB** (with the CUDA-enabled torch wheel;
+  the CPU-only wheel the deployed app installs should land near 600 MB).
+  Headroom exists but is not generous. If it is ever exceeded, the first lever
+  is bf16 weights on CPU — ~106 MB saved at a throughput cost, since CPU bf16
+  runs through reference kernels.
+- **The original deployment target stopped being free mid-milestone.** HF moved
+  Gradio Spaces behind PRO (`402 Payment Required`), so the demo runs on
+  Streamlit Community Cloud instead. The Gradio app is kept and works, but is
+  undeployed — meaning it is tested locally and by `tests/test_infer.py`'s
+  coverage of the shared generator, not by a live service. Two UIs is a real
+  maintenance cost, mitigated by keeping all generation in `src/infer.py` and
+  all limitations copy in `app/about.py`, so neither can drift.
 - **The Space runs a five-module subset of `src/`.** `demo.py` needs only
   `config`, `model`, `infer`, `utils`, `__init__`; shipping `train.py` or
   `eval.py` would drag in `datasets`, `wandb`, and `matplotlib` for no

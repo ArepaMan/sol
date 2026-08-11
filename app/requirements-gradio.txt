@@ -1,0 +1,16 @@
+# Dependencies for the Gradio demo (app/demo.py), which is NOT the deployed app.
+#
+# Hugging Face moved Gradio Spaces on free cpu-basic behind a PRO subscription,
+# so this app has nowhere free to live. It still runs locally, and it is still
+# what you would push to a HF Space if you have PRO — app/README.md carries the
+# Space YAML header for exactly that case. See docs/DEPLOY.md.
+#
+# The deployed app is app/streamlit_app.py; its deps are app/requirements.txt.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0
+
+tokenizers==0.21.0
+numpy==2.2.1
+pyyaml==6.0.2
+gradio==5.9.1
+huggingface-hub==0.27.0

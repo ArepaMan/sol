@@ -129,9 +129,13 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M7 complete. M8 code complete; the public HF Space is not yet published** —
-that's outward-facing and needs the owner's HF token and explicit go-ahead
-(`docs/DEPLOY.md`). Next: M9 (docs, spec de-drift, portfolio wiring).
+**M0–M7 complete. M8 code complete; weights published, live demo deploy pending.**
+Weights are at <https://huggingface.co/SpicyGuac/sol-001>. **The free HF Space plan
+died mid-milestone** — HF moved Gradio Spaces behind PRO (`402 Payment Required`),
+so the demo was ported to Streamlit Community Cloud (`app/streamlit_app.py`),
+whose **1 GB RAM ceiling** is now the binding deployment constraint. The final
+deploy is a GitHub-OAuth web flow at share.streamlit.io that only the owner can
+complete. Next: M9 (docs, spec de-drift, portfolio wiring). See `docs/DEPLOY.md`.
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -178,7 +182,16 @@ that's outward-facing and needs the owner's HF token and explicit go-ahead
       — first cut was 137 MiB until the tied `wte`/`lm_head` tensor's shared storage
       was preserved through the bf16 cast. `app/api.py` deliberately skipped: Gradio
       already serves `POST /gradio_api/call/stream_story`.
-- [ ] M8 publish — HF model repo + Space, and the incognito check. **Not done.**
+- [x] M8 weights published: <https://huggingface.co/SpicyGuac/sol-001> (103.1 MiB).
+      Cold-cache `hf_hub_download` path verified end-to-end — 8.7 s to model-ready,
+      and the generated story was byte-identical to the local-bundle run, confirming
+      the uploaded weights are the tested weights.
+- [x] M8 hosting pivot: HF now requires PRO for Gradio Spaces, so `app/streamlit_app.py`
+      (Streamlit Community Cloud, free) is the deployed UI. Gradio kept for local/PRO.
+      **1 GB RAM ceiling** is the constraint — measured 786 MB with the CUDA torch
+      wheel, ~600 MB estimated with the CPU-only wheel the deploy installs.
+      `@st.cache_resource` is load-bearing for memory, not just speed.
+- [ ] M8 deploy + incognito check — share.streamlit.io, owner-only OAuth flow. **Not done.**
 - [ ] M9 docs, spec de-drift, portfolio wiring
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,

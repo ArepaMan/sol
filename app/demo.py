@@ -1,4 +1,15 @@
-"""Gradio demo for Sol — deployed to a Hugging Face Space.
+"""Gradio demo for Sol — the HF Space build. **Not the deployed app.**
+
+Hugging Face moved Gradio Spaces on free `cpu-basic` behind a PRO subscription,
+which this project isn't paying for. This file is kept, working and tested,
+because it is exactly what you'd push to a Space with PRO (`app/README.md`
+carries the Space YAML header) — and because deleting it would erase a real
+deployment constraint that measurement, not planning, surfaced. The deployed
+app is `app/streamlit_app.py`; both are thin wrappers over the same
+`SolGenerator`, which is the point of putting generation in `src/infer.py`.
+
+Its dependencies are in `app/requirements-gradio.txt`, not
+`app/requirements.txt` — the latter is what Streamlit Community Cloud installs.
 
 Two things about this file are deployment decisions, not style:
 
@@ -30,6 +41,13 @@ import gradio as gr
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.infer import SolGenerator  # noqa: E402
+
+# Imported, not duplicated: the two UIs must never disagree about what the
+# model claims it can't do. See app/about.py.
+try:
+    from app.about import ABOUT_MD, EXAMPLES
+except ImportError:  # flattened layout inside a Space
+    from about import ABOUT_MD, EXAMPLES
 
 REPO_ID = os.environ.get("SOL_REPO_ID", "SpicyGuac/sol-001")
 LOCAL_DIR = os.environ.get("SOL_MODEL_DIR")
@@ -74,55 +92,6 @@ def stream_story(prompt: str, max_new_tokens: int, temperature: float, top_k: in
         yield text
 
 
-ABOUT = """
-## What Sol is
-
-A **52,901,712-parameter** decoder-only transformer, trained from scratch on
-[TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) on a single
-8 GB laptop GPU (RTX 4070 Laptop, BF16). No pretrained weights, no fine-tuning of
-anything — the tokenizer, the architecture, and the training loop are all in the
-repo. It is a portfolio project about doing the fundamentals properly, not a
-general-purpose assistant.
-
-**Code:** [github.com/ArepaMan/sol](https://github.com/ArepaMan/sol)
-
-| | |
-|---|---|
-| Parameters | 52.9M (8 layers, 8 heads, 592 embd) |
-| Context | 512 tokens |
-| Vocab | 32k byte-level BPE, trained in-domain |
-| Training | 40,000 iters, 1.31B tokens processed (~3.66 epochs) |
-| Val perplexity | **3.719**, 95% CI [3.693, 3.745] |
-| Baselines beaten | trigram 23.4 · unigram 379.0 · uniform 32000 |
-
-## What it cannot do
-
-- **It only writes children's stories.** TinyStories is simple narrative prose
-  aimed at 3–4-year-olds. That is the entire world this model has seen.
-- **It will not answer your question.** There is no instruction tuning and no
-  chat format. Ask it "What is the capital of France?" and it will continue that
-  sentence as if it were the first line of a story, because to Sol it is.
-- **Coherence is the binding limitation, not grammar.** Hand-scored on 60
-  prompts: grammar 4.00/5, coherence **3.15/5**. Named characters drift and
-  swap roles over ~150 tokens. Grammar is largely fine; the plot is not.
-- **Out-of-domain prompts fall apart** — 5.00/5 on-topic in-domain vs **1.47/5**
-  out-of-domain, on the same rubric.
-- **512-token context.** Longer prompts are truncated to their tail.
-- **Occasional mojibake** (stray `Â` characters, odd fragments). Traced, not
-  guessed: 6.20% of TinyStories' *own* training documents contain it. Inherited
-  from upstream, documented rather than quietly patched.
-
-Full writeup: [`docs/LIMITATIONS.md`](https://github.com/ArepaMan/sol/blob/master/docs/LIMITATIONS.md)
-· [`eval/results.md`](https://github.com/ArepaMan/sol/blob/master/eval/results.md)
-
-## Sampling controls
-
-**Temperature** — below ~0.6 the model repeats itself; above ~1.1 it loses the
-thread. 0.8 is the default used for every number quoted above.
-**Top-k** — restricts each step to the k most likely tokens. **Seed** — fixed
-seed plus fixed settings reproduces a story exactly.
-"""
-
 CSS = """
 .sol-note { font-size: 0.9em; opacity: 0.75; }
 """
@@ -159,16 +128,13 @@ with gr.Blocks(title="Sol — a 52M-parameter story model", css=CSS) as demo:
 
             gr.Examples(
                 examples=[
-                    ["Once upon a time, there was a little girl named Lily who", 200, 0.8, 200, 42],
-                    ["Tom and his sister found a shiny box under the old tree. Inside was", 200, 0.8, 200, 7],
-                    ['"Where did my hat go?" asked the small bear.', 200, 0.9, 200, 13],
-                    ["The robot was sad because nobody would play with it. Then one day", 200, 0.8, 200, 21],
+                    [text, 200, 0.8, 200, 42 + i * 7] for i, text in enumerate(EXAMPLES)
                 ],
                 inputs=[prompt, max_new_tokens, temperature, top_k, seed],
             )
 
         with gr.Tab("About / Limitations"):
-            gr.Markdown(ABOUT)
+            gr.Markdown(ABOUT_MD)
 
     inputs = [prompt, max_new_tokens, temperature, top_k, seed]
     go.click(stream_story, inputs=inputs, outputs=output)

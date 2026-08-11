@@ -16,8 +16,17 @@ at 379.0 (`eval/results.md`). `src/model.py` measures at **52,901,712 params**.
 Ablations (M7): learning rate has by far the largest effect (20–200× seed-to-seed
 noise); data scale (100M vs full corpus) matters, but only narrowly
 (`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
-`experiments/004_seed_variance/`). The public HF Space is not published yet — that is
-the single open M8 item; the procedure is written out in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+`experiments/004_seed_variance/`). Weights are published to
+[`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001); the live demo deploy is
+the single open M8 item — see [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+> **A note on hosting, because it changed the plan.** M8 targeted a free Hugging Face
+> Space. Hugging Face has since moved Gradio Spaces behind a PRO subscription
+> (`402 Payment Required` at `repo create`), so the demo moved to Streamlit Community
+> Cloud — free, with a **1 GB RAM ceiling** that became the milestone's real engineering
+> constraint. The Gradio app is kept and still works for anyone with PRO. Both UIs are
+> thin wrappers over the same `SolGenerator`, which is what putting generation in
+> `src/infer.py` rather than in the app bought.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -85,7 +94,7 @@ python -m src.infer --prompt "Once upon a time, there was a little girl named Li
 ```
 
 ```powershell
-python -m scripts.export_weights --out export/sol-001; $env:SOL_MODEL_DIR = "export/sol-001"; python app/demo.py
+python -m scripts.export_weights --out export/sol-001; $env:SOL_MODEL_DIR = "export/sol-001"; streamlit run app/streamlit_app.py
 ```
 
 Generation stops at the model's own end-of-story token, streams, and is

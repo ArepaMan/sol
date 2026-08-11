@@ -530,8 +530,10 @@ import, not per-request.
 ### M8 — measured results
 
 **Built:** `src/infer.py` (`SolGenerator` + CLI), `scripts/export_weights.py`,
-`app/demo.py`, `app/requirements.txt`, `app/README.md` (Space YAML header,
-`pinned: true`), `docs/DEPLOY.md`, `tests/test_infer.py` (12 tests; 123 total).
+`app/streamlit_app.py` (deployed), `app/demo.py` (Gradio, local/PRO),
+`app/about.py` (shared limitations copy), `app/requirements.txt` +
+`app/requirements-gradio.txt`, `app/README.md` (Space YAML header),
+`docs/DEPLOY.md`, `tests/test_infer.py` (12 tests; 123 total).
 `app/api.py` was skipped — the Gradio app already exposes a REST endpoint
 (`POST /gradio_api/call/stream_story`), which is what verified the app
 end-to-end below, so a separate FastAPI file would be a second surface with no
@@ -542,9 +544,53 @@ new capability. That's a scope cut, not an oversight.
 | Criterion | Status |
 |---|---|
 | `--seed 42` twice → byte-identical | ✅ verified. Needed one fix: timing output moved to **stderr**, since wall-clock on stdout can never diff clean. |
-| CPU latency recorded | ✅ **21.6 tok/s** (fp32, this machine's CPU) vs ~90 tok/s on the 4070 (bf16). Inside the 15–40 tok/s the spec predicted. |
-| Cold start measured | 🟡 measured **locally** at ~21 s to "model ready" (19.6 s imports + 1.2 s model load). The real number needs a Space that has actually slept; `docs/DEPLOY.md` says so rather than quoting the local figure as if it were the Space's. |
-| Public Space generates in incognito | ⬜ **not done** — publishing to HF is an outward-facing action awaiting the owner's go-ahead, and requires their HF token, which doesn't belong in this repo. Procedure is written out in `docs/DEPLOY.md`. |
+| CPU latency recorded | ✅ **21.6–24.6 tok/s** (fp32, this machine's CPU) vs ~90 tok/s on the 4070 (bf16). Inside the 15–40 tok/s the spec predicted. |
+| Cold start measured | 🟡 measured **locally**: ~16 s imports + 8.7 s from a cold HF cache (of which ~7.5 s is downloading 103 MiB) = ~25 s to model-ready. The deployed number needs an app that has actually slept; `docs/DEPLOY.md` says so rather than quoting the local figure as the real one. |
+| Public demo generates in incognito | 🟡 weights published to [`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001) and the cold-cache download path verified end-to-end. The app itself awaits the owner's Community Cloud deploy (a GitHub-OAuth web flow only they can complete). |
+
+### The hosting plan changed, and why
+
+**The free HF Space no longer exists as a target.** `huggingface-cli repo create
+sol --type space --space_sdk gradio` returned:
+
+```
+402 Payment Required — Static Spaces are free for everyone, but hosting
+Gradio and Docker Spaces on free cpu-basic requires a PRO subscription.
+```
+
+HF moved Gradio Spaces behind PRO after this roadmap was written. The Gradio app
+was already built, tested, and working; it had nowhere free to live. Rather than
+pay, silently drop the deployment criterion, or spend days porting to
+client-side ONNX, the UI layer moved to **Streamlit Community Cloud** — free,
+persistent, real Python backend.
+
+`app/demo.py` is **kept, not deleted**: it still runs locally, `app/README.md`
+still carries a valid Space YAML header, and `app/requirements-gradio.txt` still
+pins its deps, so anyone with PRO can deploy it unchanged. Deleting it would
+erase a constraint that measurement — not planning — surfaced.
+
+The port cost about an hour and touched no inference code at all. Both UIs are
+thin wrappers over `SolGenerator`, which is exactly what putting generation in
+`src/infer.py` instead of in the app was for. `app/about.py` holds the shared
+limitations copy so the two can't disagree about what the model can't do.
+
+**What the free tier costs instead of money**, and this is the interesting part:
+
+| | Free HF Space (planned) | Community Cloud (actual) |
+|---|---|---|
+| Sleeps after | 48 h | 12 h |
+| RAM | 16 GB | **1 GB** |
+| Deploy source | push to a Space repo | connect a public GitHub repo |
+
+The 1 GB ceiling turned into the milestone's real engineering constraint.
+Measured, CPU-only: bare Python 20 MB → +torch 386 MB → +streamlit 415 MB →
+**+model 786 MB**. That 786 MB is with the CUDA-enabled torch wheel this machine
+has; the deployed app installs the CPU-only wheel, so **~600 MB is the honest
+estimate** — about 60% of the ceiling. Two code consequences follow directly:
+`@st.cache_resource` is a memory *requirement* rather than an optimisation
+(Streamlit reruns the whole script per interaction, so an uncached loader would
+allocate a fresh 212 MB model per click), and fp32-on-CPU stays the default with
+bf16 held in reserve as the ~106 MB lever if the ceiling is ever hit.
 
 **Two things measurement changed:**
 

@@ -1,18 +1,17 @@
-# Space dependencies — deliberately minimal.
+# Deployed-app dependencies — Streamlit Community Cloud reads this file because
+# it sits in the same directory as the entrypoint (app/streamlit_app.py). The
+# repo-root requirements.txt is the *training* environment (datasets, wandb,
+# matplotlib, jupyter) and must never be what the demo installs.
 #
-# The Space's cold start is dominated by image size, and the single biggest
-# lever is torch: the default PyPI wheel bundles CUDA (~2.5 GB of libraries a
-# CPU-only Space can never use). The CPU index below is ~200 MB instead. This
-# is the difference between a ~40 s and a multi-minute cold start.
+# The single biggest lever here is torch: the default PyPI wheel bundles ~2.5 GB
+# of CUDA libraries that a CPU-only host can never use. The CPU index below is
+# ~200 MB instead — the difference between a fast cold start and a timeout.
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.6.0
 
 # Everything src/infer.py + src/config.py + src/model.py actually import.
-# Note what is NOT here: datasets, wandb, matplotlib, pandas, scipy, jupyter,
-# pytest. The repo's root requirements.txt is for training and analysis; the
-# Space only needs to run a forward pass.
 tokenizers==0.21.0
 numpy==2.2.1
 pyyaml==6.0.2
-gradio==5.9.1
+streamlit==1.41.1
 huggingface-hub==0.27.0

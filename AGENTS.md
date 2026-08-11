@@ -129,12 +129,16 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M8 complete.** Live demo: <https://sol-52m.streamlit.app> · weights:
+**M0–M9 complete — the roadmap is done.** Live demo:
+<https://sol-52m.streamlit.app> · weights:
 <https://huggingface.co/SpicyGuac/sol-001>. **The free HF Space plan died
 mid-milestone** — HF moved Gradio Spaces behind PRO (`402 Payment Required`), so
 the demo was ported to Streamlit Community Cloud (`app/streamlit_app.py`), whose
-**1 GB RAM ceiling** is the binding deployment constraint. Next: M9 (docs, spec
-de-drift, portfolio wiring). See `docs/DEPLOY.md`. See `docs/DEPLOY.md`.
+**1 GB RAM ceiling** is the binding deployment constraint. See `docs/DEPLOY.md`.
+
+**Before changing any number in a config or doc:** run `python -m scripts.export_spec`
+afterwards. `docs/spec.json` and `docs/sol-spec.ts` are generated, the portfolio
+imports the latter, and `tests/test_spec_drift.py` fails if they're stale. See `docs/DEPLOY.md`.
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -200,8 +204,17 @@ de-drift, portfolio wiring). See `docs/DEPLOY.md`. See `docs/DEPLOY.md`.
       be changed after creation), and a bare `torch==2.6.0` pulls the **CUDA** wheel even
       with the CPU index listed, since `--extra-index-url` is additive not preferential —
       pin `torch==2.6.0+cpu`.
-- [ ] M8 residual: a true wake-from-sleep cold start (needs 12 h idle) is still unmeasured.
-- [ ] M9 docs, spec de-drift, portfolio wiring
+- [x] M9 docs + spec de-drift + portfolio: `scripts/export_spec.py` (+ `--check`),
+      `docs/spec.json`, `docs/sol-spec.ts`, `tests/test_spec_drift.py` (11 tests, **134
+      total**), `docs/INTERVIEW_NOTES.md`, `scripts/plot_ablations.py`. The drift guard
+      was verified to actually fail: editing `learning_rate` reddens two tests, restoring
+      it greens them. Portfolio `/projects/sol` rewritten from the generated spec —
+      status `finished`, live + repo links, four real figures — and verified against the
+      **production** build. Found two pre-existing portfolio bugs while wiring: MDX had no
+      `remark-gfm` so markdown tables rendered as literal pipes (3 pages affected, 2 of
+      them already published), and `demo.gallery` was dropped unless `demo.component`
+      happened to be `ScreenshotGallery`.
+- [ ] Residual: a true wake-from-sleep cold start (needs 12 h idle) is still unmeasured.
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
 RTX 4070 Laptop (sm_89), 123 tests passing. `gradient_checkpointing` flipped to

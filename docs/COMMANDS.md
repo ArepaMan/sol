@@ -153,8 +153,16 @@ Full deployment procedure, including the HF model repo and the Space:
 Regenerate the spec artifacts after **any** config change, then copy to the portfolio:
 
 ```powershell
-python scripts/export_spec.py
-copy docs\sol-spec.ts ..\portfolio\src\data\sol-spec.ts
+python -m scripts.export_spec
+copy docs\sol-spec.ts ..\portfolio\src\lib\sol-spec.ts
 ```
 
-`tests/test_spec_drift.py` fails if you edit the YAML without regenerating.
+`tests/test_spec_drift.py` fails if you edit the YAML — or any eval artifact —
+without regenerating. Verified: changing `learning_rate` in the config turns two
+tests red until `export_spec` is re-run.
+
+To check freshness without writing (what CI would run):
+
+```powershell
+python -m scripts.export_spec --check
+```

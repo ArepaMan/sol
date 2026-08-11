@@ -17,7 +17,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 6 | ✅ Eval harness | 6–8 h | 1 h | |
 | 7 | ✅ Ablations + seed variance | 3 h | 20–40 h | |
 | 8 | ✅ Infer CLI, demo, live deploy | 6–8 h | — | Streamlit, not HF Space — see M8 |
-| 9 | Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
+| 9 | ✅ Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
 
 **Minimum viable cut** if time runs short: M0→M1→M2→M3→M4→M5→M6 (perplexity + baselines
 only)→M8→M9. Drop M7's ablations and M6's manual rubric. **Never drop M2 or M4's gates** —
@@ -653,6 +653,44 @@ will become the dishonest thing to say.** Rewriting it is part of the milestone.
 - `pytest` green including `test_spec_drift.py`
 - `npm run build` green; `/projects/sol` renders live link, repo link, gallery, correct numbers
 - No `2070` / `float16` / `coming-soon` / `not started` for Sol in either repo
+
+### M9 — measured results
+
+**Built:** `scripts/export_spec.py` (+ `--check`), `docs/spec.json`,
+`docs/sol-spec.ts`, `tests/test_spec_drift.py` (11 tests; **134 total**),
+`docs/INTERVIEW_NOTES.md`, `scripts/plot_ablations.py` →
+`experiments/ablation_summary.png`. Portfolio: `sol.mdx` rewritten,
+`sol-spec-explorer.tsx` rewired to import the generated spec, four real figures
+in the gallery, new thumbnail.
+
+| Criterion | Status |
+|---|---|
+| `pytest` green incl. `test_spec_drift.py` | ✅ 134 passing |
+| `npm run build` green; page renders correctly | ✅ verified against the **production** build, not just dev |
+| No stale strings in either repo | ✅ `2070`, `float16`, `coming-soon`, `not started` all gone |
+
+**The drift test was verified to actually fail.** Changing `learning_rate` in
+the YAML turns two tests red; restoring it turns them green. A guard that has
+never been seen to fire is not a guard.
+
+`export_spec.py` reads *artifacts*, not transcribed values: the config YAML, a
+real `GPT` instantiation for the parameter count, `stats.json`, `meta.json`,
+`eval/results.json`, `ablation_eval_results.json`. The only hand-entered numbers
+are deployment and hardware facts that have no other machine-readable home, and
+they are marked as such in the source.
+
+**Two bugs found in the portfolio while wiring it up**, both pre-existing and
+neither Sol-specific:
+
+1. **Markdown tables rendered as literal pipe characters.** `MDXRemote` had no
+   `remark-gfm`, and plain CommonMark has no table syntax. Three pages were
+   already affected — Sol, Elephant in the Room, and the ComfyUI sprites
+   write-up — so two of them had been publishing broken tables. Fixed once in a
+   shared `src/lib/mdx.ts` used by both the projects and personal routes.
+2. **`demo.gallery` was silently dropped unless `demo.component` happened to be
+   `ScreenshotGallery`.** The two fields are independent in `ProjectDemo`, so
+   any project pairing figures with a different interactive component lost them.
+   Now gated on the data rather than on the sibling field.
 
 ---
 

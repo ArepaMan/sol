@@ -8,14 +8,16 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-✅ **M0–M7 complete** — environment, data pipeline, EDA, model, training loop, baseline
-run, evaluation harness, and ablations are all done. **Sol-001: val perplexity 3.719, 95%
-CI [3.693, 3.745]** on the full 15,141-document val set — vs a trigram baseline at 23.4
-and a unigram baseline at 379.0 (`eval/results.md`). `src/model.py` measures at
-**52,901,712 params**. Ablations (M7): learning rate has by far the largest effect
-(20–200× seed-to-seed noise); data scale (100M vs full corpus) matters, but only
-narrowly (`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
-`experiments/004_seed_variance/`). M8 (inference CLI, Gradio demo) is next.
+✅ **M0–M7 complete**, **M8 code complete** — environment, data pipeline, EDA, model,
+training loop, baseline run, evaluation harness, ablations, and the inference CLI +
+Gradio demo are all done. **Sol-001: val perplexity 3.719, 95% CI [3.693, 3.745]** on
+the full 15,141-document val set — vs a trigram baseline at 23.4 and a unigram baseline
+at 379.0 (`eval/results.md`). `src/model.py` measures at **52,901,712 params**.
+Ablations (M7): learning rate has by far the largest effect (20–200× seed-to-seed
+noise); data scale (100M vs full corpus) matters, but only narrowly
+(`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
+`experiments/004_seed_variance/`). The public HF Space is not published yet — that is
+the single open M8 item; the procedure is written out in [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -75,6 +77,22 @@ than pretending one is meaningful):
 Full writeups: [`experiments/002_lr_sweep/results.md`](experiments/002_lr_sweep/results.md),
 [`experiments/003_data_scale/results.md`](experiments/003_data_scale/results.md),
 [`experiments/004_seed_variance/results.md`](experiments/004_seed_variance/results.md).
+
+## Try it
+
+```powershell
+python -m src.infer --prompt "Once upon a time, there was a little girl named Lily who" --seed 42
+```
+
+```powershell
+python -m scripts.export_weights --out export/sol-001; $env:SOL_MODEL_DIR = "export/sol-001"; python app/demo.py
+```
+
+Generation stops at the model's own end-of-story token, streams, and is
+reproducible per device: `--seed 42` twice gives byte-identical stdout. Measured
+throughput: **~90 tok/s** on the 4070 (bf16), **21.6 tok/s** on CPU (fp32) — the
+demo runs at the CPU number. Deployment procedure and the full cold-start
+analysis: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## How to run
 

@@ -44,6 +44,14 @@ was measured, not just asserted, and points at the artifact that backs it.
   is a concrete next step, not attempted in M6 since that milestone is eval,
   not a second pass over `data/clean.py`.
 - **Generation doesn't stop at the model's own end-of-story token.**
+  **Fixed in M8** — `src/infer.py`'s sampling loop breaks on `eot_id` (read
+  from `data/tokenized/meta.json`, not hardcoded), and both the CLI and the
+  Gradio demo route through it. Measured on the same prompt: the model stops
+  itself at 191 of a 300-token budget, on a complete closing sentence. The
+  fix landed in `src/infer.py` rather than `src/model.py` so the M3
+  architecture file stays an architecture file, and `src/generate_samples.py`
+  was deliberately left alone so M6's published numbers still describe the
+  code that produced them. Original M6 finding below, unedited.
   `src/generate_samples.py` always spends its full `--max-new-tokens`
   budget, so most 150-token samples run past a natural ending into a second,
   unrelated story with no separating punctuation. The model itself emits
@@ -72,9 +80,36 @@ was measured, not just asserted, and points at the artifact that backs it.
   `eval/results.md`) — resolving the ambiguity `run.md` flagged at the time.
   `latest.pt` is confirmed the correct checkpoint to use going forward.
 
+## Deployment (M8 findings — `docs/DEPLOY.md`, `app/`)
+
+- **CPU inference is ~4× slower than the GPU, and that is the demo's real
+  speed.** Measured: 21.6 tok/s on this machine's CPU (fp32) vs ~90 tok/s on
+  the RTX 4070 (bf16), both from `src/infer.py --seed 42 --max-new-tokens
+  200`. The free HF Space has 2 vCPU and will be slower still. A 200-token
+  story is a ~10-15 second wait there, which is why the demo streams rather
+  than returning one block at the end.
+- **Sampling is reproducible per device, not across devices.** `--seed 42`
+  twice on the same device is byte-identical (an M8 exit criterion; timing
+  output goes to stderr so the diff is clean). CUDA seed 42 and CPU seed 42
+  produce *different* stories — different kernels, different floating-point
+  rounding, a different sampled token, and everything after it diverges.
+  Worth stating because "seeded" is often read as stronger than it is.
+- **Cold start is a real cost, mitigated but not eliminated.** Free Spaces
+  sleep after 48h idle. Four mitigations are in place (`pinned: true`, a
+  CPU-only torch wheel, import-time model loading, and an in-UI warning) —
+  see `docs/DEPLOY.md`. The honest fix for a limitation you can't remove is
+  to tell the user about it in the UI, which the demo does.
+- **The Space runs a five-module subset of `src/`.** `demo.py` needs only
+  `config`, `model`, `infer`, `utils`, `__init__`; shipping `train.py` or
+  `eval.py` would drag in `datasets`, `wandb`, and `matplotlib` for no
+  runtime benefit. The cost is that the Space is a *copy*, so it can drift
+  from GitHub — `docs/DEPLOY.md` documents the sync step rather than
+  pretending it's automatic.
+
 ## What's next
 
-Ablations (M7) will add seed-variance as the honest yardstick for reading
-any of the above as signal vs noise. Deployment (M8) inherits the EOT-stop
-fix and should carry an explicit "About / Limitations" tab reflecting this
-document, not a cleaned-up subset of it.
+M9 closes the loop: spec de-drift (`scripts/export_spec.py`) and portfolio
+wiring. The three standing technical gaps, unchanged and unfixed, are
+coherence/entity drift, the inherited mojibake in 6.20% of the training
+corpus, and the un-ablated architecture choices (learned PE, LayerNorm+GELU)
+at the top of this document.

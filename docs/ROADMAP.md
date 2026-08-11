@@ -16,7 +16,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 5 | ✅ Baseline run 001 | 1 h | 12–24 h | |
 | 6 | ✅ Eval harness | 6–8 h | 1 h | |
 | 7 | ✅ Ablations + seed variance | 3 h | 20–40 h | |
-| 8 | Infer CLI, Gradio, HF Space | 6–8 h | — | |
+| 8 | 🟡 Infer CLI, Gradio, HF Space | 6–8 h | — | code done; publish pending |
 | 9 | Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
 
 **Minimum viable cut** if time runs short: M0→M1→M2→M3→M4→M5→M6 (perplexity + baselines
@@ -526,6 +526,50 @@ import, not per-request.
 - `src/infer.py --seed 42` twice → byte-identical output
 
 **Skills:** deployment (8), honest limitations (9).
+
+### M8 — measured results
+
+**Built:** `src/infer.py` (`SolGenerator` + CLI), `scripts/export_weights.py`,
+`app/demo.py`, `app/requirements.txt`, `app/README.md` (Space YAML header,
+`pinned: true`), `docs/DEPLOY.md`, `tests/test_infer.py` (12 tests; 123 total).
+`app/api.py` was skipped — the Gradio app already exposes a REST endpoint
+(`POST /gradio_api/call/stream_story`), which is what verified the app
+end-to-end below, so a separate FastAPI file would be a second surface with no
+new capability. That's a scope cut, not an oversight.
+
+**Exit criteria, one by one:**
+
+| Criterion | Status |
+|---|---|
+| `--seed 42` twice → byte-identical | ✅ verified. Needed one fix: timing output moved to **stderr**, since wall-clock on stdout can never diff clean. |
+| CPU latency recorded | ✅ **21.6 tok/s** (fp32, this machine's CPU) vs ~90 tok/s on the 4070 (bf16). Inside the 15–40 tok/s the spec predicted. |
+| Cold start measured | 🟡 measured **locally** at ~21 s to "model ready" (19.6 s imports + 1.2 s model load). The real number needs a Space that has actually slept; `docs/DEPLOY.md` says so rather than quoting the local figure as if it were the Space's. |
+| Public Space generates in incognito | ⬜ **not done** — publishing to HF is an outward-facing action awaiting the owner's go-ahead, and requires their HF token, which doesn't belong in this repo. Procedure is written out in `docs/DEPLOY.md`. |
+
+**Two things measurement changed:**
+
+1. **The export was 36 MiB fatter than it should have been.** First run produced
+   137 MiB for a model whose bf16 weights are 100.9 MiB. Cause: `transformer.wte.weight`
+   and `lm_head.weight` are one tied tensor, and casting `state_dict()` entries
+   independently allocates two tensors, defeating `torch.save`'s shared-storage
+   dedupe — so the 32000×592 embedding table got written twice. Casting once per
+   storage brings the bundle to **103.1 MiB total**, matching the spec's ~104 MB
+   estimate. On a cold-start-sensitive download that's worth the four lines.
+2. **The M6 EOT gap is closed.** `src/infer.py` stops on `eot_id` (read from
+   `data/tokenized/meta.json`, not hardcoded). Measured: the model ends itself at
+   191 of a 300-token budget, on a complete sentence, where `generate_samples.py`
+   would have run all 300 and started a second unrelated story. Fixed in
+   `infer.py` rather than `model.py` to keep the M3 architecture file clean, and
+   `generate_samples.py` was left untouched so M6's published numbers still
+   describe the code that produced them.
+
+**Verification note, stated plainly:** the Gradio UI was confirmed to render
+both tabs and to generate end-to-end, but the generation was triggered through
+Gradio's own HTTP event API rather than a rendered mouse click — the browser
+pane in this environment wasn't compositing frames, so synthetic clicks didn't
+dispatch. Same server, same handler, same streaming path; not the same as a
+human clicking the button. The incognito check in the exit criteria is still
+outstanding and is the thing that closes this gap properly.
 
 ---
 

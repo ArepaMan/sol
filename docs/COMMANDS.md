@@ -111,10 +111,42 @@ python -m src.generate_samples --checkpoint checkpoints/001_baseline/best.pt --p
 
 ## Inference & demo (M8)
 
+Note the checkpoint default is `latest.pt`, not `best.pt` — M6 re-evaluated
+both on the full val set and `latest.pt` (iter 40000) wins. See
+`docs/LIMITATIONS.md`.
+
 ```powershell
-python -m src.infer --checkpoint checkpoints/001_baseline/best.pt --prompt "Once upon a time" --max-new-tokens 200 --temperature 0.8 --top-k 40 --seed 42
-python app/demo.py
+python -m src.infer --prompt "Once upon a time" --max-new-tokens 200 --temperature 0.8 --top-k 200 --seed 42
 ```
+
+```powershell
+python -m src.infer --stream --n 3 --seed 42
+```
+
+Build the deployable bundle (bf16 weights + tokenizer + config, 103 MiB), then
+run the CLI and the demo against it — this is the exact path the HF Space takes:
+
+```powershell
+python -m scripts.export_weights --out export/sol-001
+```
+
+```powershell
+python -m src.infer --model-dir export/sol-001 --device cpu --seed 42
+```
+
+```powershell
+$env:SOL_MODEL_DIR = "export/sol-001"; python app/demo.py
+```
+
+Reproducibility check (stdout only — timing goes to stderr on purpose, so this
+diff is clean):
+
+```powershell
+python -m src.infer --seed 42 > a.txt; python -m src.infer --seed 42 > b.txt; fc.exe a.txt b.txt
+```
+
+Full deployment procedure, including the HF model repo and the Space:
+[`docs/DEPLOY.md`](DEPLOY.md).
 
 ## Spec sync (M9)
 

@@ -129,7 +129,9 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M7 complete.** Next: M8 (inference CLI, Gradio demo, HF Space).
+**M0–M7 complete. M8 code complete; the public HF Space is not yet published** —
+that's outward-facing and needs the owner's HF token and explicit go-ahead
+(`docs/DEPLOY.md`). Next: M9 (docs, spec de-drift, portfolio wiring).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -166,10 +168,21 @@ disproportionate interview weight.
       `max_train_tokens` cap on `BinDataset` is now actually enforced (was
       descriptive-only through M6; confirmed a no-op at the full-corpus value). Full
       writeup: `docs/ROADMAP.md` M7 section.
-- [ ] M8 demo
+- [x] M8 inference + demo (code): `src/infer.py` (`SolGenerator` + CLI),
+      `scripts/export_weights.py`, `app/{demo.py,requirements.txt,README.md}`,
+      `docs/DEPLOY.md`, `tests/test_infer.py` (12 tests). Closes M6's EOT-stop gap —
+      generation now ends itself (191 of a 300-token budget on the test prompt) instead
+      of running the budget into a second story. **Reproducibility gate passes**:
+      `--seed 42` twice is byte-identical (timing was moved to stderr to make that
+      true). **CPU 21.6 tok/s** vs ~90 tok/s on the 4070. Export bundle **103.1 MiB**
+      — first cut was 137 MiB until the tied `wte`/`lm_head` tensor's shared storage
+      was preserved through the bf16 cast. `app/api.py` deliberately skipped: Gradio
+      already serves `POST /gradio_api/call/stream_story`.
+- [ ] M8 publish — HF model repo + Space, and the incognito check. **Not done.**
+- [ ] M9 docs, spec de-drift, portfolio wiring
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 89 tests passing. `gradient_checkpointing` flipped to
+RTX 4070 Laptop (sm_89), 123 tests passing. `gradient_checkpointing` flipped to
 **false** after measurement (M4) — chosen config peaks at 2344 MiB, far under the
 7400 MiB target. M5's baseline run took 30.3h wall-clock (16.9h training + 12.17h the
 laptop was asleep, twice — see `experiments/001_baseline/run.md`); awake-time

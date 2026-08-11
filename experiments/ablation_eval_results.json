@@ -1,0 +1,44 @@
+{
+  "002_lr_1e-4": {
+    "checkpoint": "checkpoints/ablation_002_lr_1e-4/latest.pt",
+    "iter_num": 8000,
+    "ppl": 5.37981692323637,
+    "ci_lo": 5.341813613974604,
+    "ci_hi": 5.418162734189514
+  },
+  "002_lr_3e-4": {
+    "checkpoint": "checkpoints/ablation_002_lr_3e-4/latest.pt",
+    "iter_num": 8000,
+    "ppl": 4.488972435707821,
+    "ci_lo": 4.458012260766336,
+    "ci_hi": 4.5202969677792355
+  },
+  "002_lr_1e-3": {
+    "checkpoint": "checkpoints/ablation_002_lr_1e-3/latest.pt",
+    "iter_num": 8000,
+    "ppl": 4.161753472139058,
+    "ci_lo": 4.133468499073474,
+    "ci_hi": 4.190413467262541
+  },
+  "003_data_100m": {
+    "checkpoint": "checkpoints/ablation_003_data_100m/latest.pt",
+    "iter_num": 8000,
+    "ppl": 4.572226812199316,
+    "ci_lo": 4.540029750877368,
+    "ci_hi": 4.6047498452504305
+  },
+  "004_seed_43": {
+    "checkpoint": "checkpoints/ablation_004_seed_43/latest.pt",
+    "iter_num": 8000,
+    "ppl": 4.494563854586613,
+    "ci_lo": 4.463381180038781,
+    "ci_hi": 4.526015875989474
+  },
+  "004_seed_44": {
+    "checkpoint": "checkpoints/ablation_004_seed_44/latest.pt",
+    "iter_num": 8000,
+    "ppl": 4.485659516858658,
+    "ci_lo": 4.454867772621189,
+    "ci_hi": 4.516955049823592
+  }
+}

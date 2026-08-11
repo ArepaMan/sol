@@ -176,25 +176,32 @@ Sol-001 in a handful of generations — see `docs/DATA_CARD.md` and `docs/LIMITA
 
 </details>
 
-## Planned ablations
+## Ablations — measured, M7
 
-| ID | Variable | Values |
-|----|----------|--------|
-| 000 | VRAM / throughput benchmark | batch × checkpointing × compile sweep |
-| 001 | Baseline | Default config |
-| 002 | Learning rate | 1e-4 vs 3e-4 vs 1e-3 |
-| 003 | Data scale | 100M vs 400M tokens, **equal iteration count** |
-| 004 | **Seed variance** | seeds 42 / 43 / 44, baseline config |
+| ID | Variable | Values | **Result** |
+|----|----------|--------|--------|
+| 000 | VRAM / throughput benchmark | batch × checkpointing × compile sweep | `experiments/000_benchmark/results.md` |
+| 001 | Baseline | Default config | `experiments/001_baseline/run.md` — ppl 3.719 |
+| 002 | Learning rate | 1e-4 vs 3e-4 vs 1e-3 | **1e-3 best (4.162 ppl)**, real effect, 20–200× seed noise |
+| 003 | Data scale | 100M vs full (357.85M) tokens, **equal iteration count** | full corpus wins but by a small margin (4.489 vs 4.572 ppl) — the milestone's stated negative/null result |
+| 004 | **Seed variance** | seeds 42 / 43 / 44, baseline config | **4.490 ± 0.0045 ppl** — the yardstick for 002/003 above |
 
-Store configs and results under `experiments/`.
+Configs: `configs/ablations/`. Results: `experiments/002_lr_sweep/results.md`,
+`experiments/003_data_scale/results.md`, `experiments/004_seed_variance/results.md`.
 
 **004 is what makes 002 and 003 interpretable.** With a single run per arm there is no
-way to tell a real learning-rate effect from run-to-run noise. Report each ablation's
-gap against the seed-to-seed standard deviation and state plainly whether it clears
-that bar. n=3 is too few for a t-test — say so rather than computing one.
+way to tell a real learning-rate effect from run-to-run noise. Each ablation's gap is
+reported against the seed-to-seed standard deviation, stating plainly whether it clears
+that bar (both do — 002 by a wide margin, 003 narrowly). n=3 is too few for a t-test,
+so it isn't computed — the range/sd is reported directly instead, per the milestone's
+own instruction.
 
-Ablations run at reduced `max_iters` (~8000) to fit the GPU budget; that limitation is
-disclosed in `docs/ABLATIONS.md` rather than papered over.
+Ablations ran at reduced `max_iters=8000` (not the 40k baseline) to fit the compute
+budget — disclosed in every ablation config's header and in
+`docs/ROADMAP.md`'s M7 section, not papered over. (`docs/ABLATIONS.md` was the
+originally-planned filename for this writeup; the actual results ended up living in
+`experiments/*/results.md` instead, alongside every other milestone's — no separate
+file was created, so this correction points at where the real numbers are.)
 
 ## Evaluation plan
 

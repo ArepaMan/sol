@@ -15,7 +15,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 4 | ✅ Training loop + smoke gates + benchmark | 8–10 h | — | |
 | 5 | ✅ Baseline run 001 | 1 h | 12–24 h | |
 | 6 | ✅ Eval harness | 6–8 h | 1 h | |
-| 7 | Ablations + seed variance | 3 h | 20–40 h | |
+| 7 | ✅ Ablations + seed variance | 3 h | 20–40 h | |
 | 8 | Infer CLI, Gradio, HF Space | 6–8 h | — | |
 | 9 | Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
 
@@ -455,6 +455,52 @@ why (underpowered); report effect size against seed noise instead.
   than a clean win
 
 **Skills:** ablations (6), evaluation (5), honest limitations (9).
+
+### M7 — measured results
+
+Full writeups: [`experiments/002_lr_sweep/results.md`](../experiments/002_lr_sweep/results.md),
+[`experiments/003_data_scale/results.md`](../experiments/003_data_scale/results.md),
+[`experiments/004_seed_variance/results.md`](../experiments/004_seed_variance/results.md).
+All six checkpoints scored with the same document-level, full-val-set,
+bootstrap-CI method as M6 (`scripts/eval_ablation_checkpoints.py`), so every
+number below is directly comparable.
+
+**Seed variance (the yardstick): 4.490 ± 0.0045 ppl across seeds 42/43/44** —
+n=3 is too underpowered for a t-test, so this range (max−min = 0.0089 ppl) is
+reported directly and used to judge the other two ablations, per this
+milestone's own instruction rather than a workaround for lacking one.
+
+| Ablation | Result | vs seed-noise floor |
+|---|---|---|
+| **002 LR sweep** | 1e-4: 5.380 · **3e-4: 4.489** · 1e-3: **4.162** (best) | gaps are 20–200× seed sd — clear real signal |
+| **003 data scale** | 100M: 4.572 · full corpus: 4.489 | gap is 18× seed sd (real, but small — see below) |
+
+**002 is the clear, large effect.** At this 8000-iter budget, higher LR (1e-3)
+beats the project's own baseline LR (3e-4), which beats a too-low LR (1e-4) —
+expected direction, real magnitude (up to ~0.9 ppl, vs ~0.005 ppl of seed
+noise). Explicitly scoped: this does **not** claim 1e-3 would beat 3e-4 over
+the full 40k-iter baseline run — a short-schedule "covers more ground faster"
+result is a different question from long-run stability.
+
+**003 is this milestone's honest negative/null result, stated as such per the
+exit criteria.** More data does help (100M loses to the full corpus by 18× the
+seed-noise floor — real, not noise) but the effect is small: a ~1.8% relative
+perplexity difference, dwarfed by the LR sweep's ~20% swing. Data scale is the
+variable that sounds like it should matter most and mattered the least of
+anything tested — most likely because TinyStories' own internal repetitiveness
+(`docs/DATA_CARD.md`, 14.58% within-train exact-dup rate) makes a 100M-token
+slice a less punishing cut than it would be on a less templated corpus.
+
+**Real infrastructure findings from this milestone, not just training results:**
+`data.max_train_tokens` was descriptive-only through M6 — `src/data.py`'s
+`BinDataset` now actually enforces it for `003`'s data-scale arm (confirmed a
+no-op at the full corpus value, so earlier baselines are unaffected). Also: a
+runner-script bug (`python | tee` masking a killed process's exit code, no
+`set -o pipefail`) caused one real incident — killing what looked like a
+stalled run silently cascaded the pipeline into the next ablation arm before
+the first had reached its full iteration count. Caught, fixed, and the
+affected run (`003_data_100m`) was re-resumed to completion from its last
+checkpoint before these numbers were measured — not silently patched over.
 
 ---
 

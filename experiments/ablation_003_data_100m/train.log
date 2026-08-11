@@ -1,0 +1,313 @@
+device: NVIDIA GeForce RTX 4070 Laptop GPU | 8.0 GiB | sm_89 | bf16=True
+run: ablation_003_data_100m  precision: bfloat16  max_iters: 8000
+model: 52.9M params (52,901,712)
+iter      0 | loss 10.4270 | lr 3.00e-07 | grad_norm 13.802 | tok/s 17,411 | data_time_frac 6.1% | peak_vram 1930MiB
+iter     25 | loss 9.1452 | lr 7.79e-06 | grad_norm 3.489 | tok/s 28,511 | data_time_frac 3.9% | peak_vram 2344MiB
+iter     50 | loss 8.4220 | lr 1.53e-05 | grad_norm 2.750 | tok/s 27,040 | data_time_frac 7.0% | peak_vram 2344MiB
+iter     75 | loss 7.5939 | lr 2.28e-05 | grad_norm 2.281 | tok/s 26,036 | data_time_frac 5.5% | peak_vram 2344MiB
+iter    100 | loss 6.8592 | lr 3.03e-05 | grad_norm 2.217 | tok/s 24,941 | data_time_frac 4.4% | peak_vram 2344MiB
+iter    125 | loss 6.2989 | lr 3.78e-05 | grad_norm 1.955 | tok/s 24,316 | data_time_frac 3.9% | peak_vram 2344MiB
+iter    150 | loss 5.6521 | lr 4.53e-05 | grad_norm 1.955 | tok/s 23,900 | data_time_frac 4.2% | peak_vram 2344MiB
+iter    175 | loss 5.1308 | lr 5.27e-05 | grad_norm 1.598 | tok/s 23,660 | data_time_frac 3.9% | peak_vram 2344MiB
+iter    200 | loss 4.7899 | lr 6.02e-05 | grad_norm 1.490 | tok/s 23,478 | data_time_frac 3.6% | peak_vram 2344MiB
+iter    225 | loss 4.4778 | lr 6.77e-05 | grad_norm 1.649 | tok/s 23,410 | data_time_frac 3.4% | peak_vram 2344MiB
+iter    250 | loss 4.2886 | lr 7.52e-05 | grad_norm 1.455 | tok/s 23,322 | data_time_frac 3.2% | peak_vram 2344MiB
+iter    275 | loss 4.1438 | lr 8.27e-05 | grad_norm 1.547 | tok/s 23,206 | data_time_frac 3.0% | peak_vram 2344MiB
+iter    300 | loss 4.0619 | lr 9.02e-05 | grad_norm 1.672 | tok/s 23,096 | data_time_frac 2.8% | peak_vram 2344MiB
+iter    325 | loss 3.9104 | lr 9.77e-05 | grad_norm 1.893 | tok/s 22,955 | data_time_frac 2.8% | peak_vram 2344MiB
+iter    350 | loss 3.7193 | lr 1.05e-04 | grad_norm 1.914 | tok/s 22,736 | data_time_frac 3.4% | peak_vram 2344MiB
+iter    375 | loss 3.6683 | lr 1.13e-04 | grad_norm 2.110 | tok/s 22,486 | data_time_frac 3.9% | peak_vram 2344MiB
+iter    400 | loss 3.5770 | lr 1.20e-04 | grad_norm 2.219 | tok/s 22,216 | data_time_frac 4.7% | peak_vram 2344MiB
+iter    425 | loss 3.4407 | lr 1.28e-04 | grad_norm 2.306 | tok/s 22,001 | data_time_frac 5.1% | peak_vram 2344MiB
+iter    450 | loss 3.4312 | lr 1.35e-04 | grad_norm 2.149 | tok/s 21,755 | data_time_frac 6.0% | peak_vram 2344MiB
+iter    475 | loss 3.3821 | lr 1.43e-04 | grad_norm 2.008 | tok/s 21,534 | data_time_frac 6.6% | peak_vram 2344MiB
+iter    500 | loss 3.2332 | lr 1.50e-04 | grad_norm 2.524 | tok/s 21,320 | data_time_frac 7.3% | peak_vram 2344MiB
+  eval @ iter 500: train 3.2112  val 3.2571
+  new best val_loss 3.2571 � saved checkpoints\ablation_003_data_100m\best.pt
+iter    525 | loss 3.1987 | lr 1.58e-04 | grad_norm 2.131 | tok/s 21,040 | data_time_frac 7.2% | peak_vram 2344MiB
+iter    550 | loss 3.1843 | lr 1.65e-04 | grad_norm 2.269 | tok/s 20,930 | data_time_frac 7.6% | peak_vram 2344MiB
+iter    575 | loss 3.0700 | lr 1.73e-04 | grad_norm 2.714 | tok/s 20,863 | data_time_frac 7.7% | peak_vram 2344MiB
+iter    600 | loss 3.0168 | lr 1.80e-04 | grad_norm 2.625 | tok/s 20,809 | data_time_frac 7.8% | peak_vram 2344MiB
+iter    625 | loss 2.9447 | lr 1.88e-04 | grad_norm 2.270 | tok/s 20,830 | data_time_frac 7.6% | peak_vram 2344MiB
+iter    650 | loss 2.9288 | lr 1.95e-04 | grad_norm 2.175 | tok/s 20,841 | data_time_frac 7.3% | peak_vram 2344MiB
+iter    675 | loss 2.8678 | lr 2.03e-04 | grad_norm 2.354 | tok/s 20,854 | data_time_frac 7.2% | peak_vram 2344MiB
+iter    700 | loss 2.7810 | lr 2.10e-04 | grad_norm 2.496 | tok/s 20,872 | data_time_frac 7.0% | peak_vram 2344MiB
+iter    725 | loss 2.8152 | lr 2.18e-04 | grad_norm 2.197 | tok/s 20,889 | data_time_frac 6.8% | peak_vram 2344MiB
+iter    750 | loss 2.6657 | lr 2.25e-04 | grad_norm 1.865 | tok/s 20,901 | data_time_frac 6.6% | peak_vram 2344MiB
+iter    775 | loss 2.7157 | lr 2.33e-04 | grad_norm 1.967 | tok/s 20,920 | data_time_frac 6.5% | peak_vram 2344MiB
+iter    800 | loss 2.6829 | lr 2.40e-04 | grad_norm 1.947 | tok/s 20,955 | data_time_frac 6.5% | peak_vram 2344MiB
+iter    825 | loss 2.5444 | lr 2.48e-04 | grad_norm 1.645 | tok/s 21,012 | data_time_frac 6.3% | peak_vram 2344MiB
+iter    850 | loss 2.6691 | lr 2.55e-04 | grad_norm 1.548 | tok/s 21,042 | data_time_frac 6.2% | peak_vram 2344MiB
+iter    875 | loss 2.4951 | lr 2.63e-04 | grad_norm 1.581 | tok/s 21,073 | data_time_frac 6.1% | peak_vram 2344MiB
+iter    900 | loss 2.5455 | lr 2.70e-04 | grad_norm 1.471 | tok/s 21,102 | data_time_frac 5.9% | peak_vram 2344MiB
+iter    925 | loss 2.4336 | lr 2.78e-04 | grad_norm 1.426 | tok/s 21,132 | data_time_frac 5.8% | peak_vram 2344MiB
+iter    950 | loss 2.4784 | lr 2.85e-04 | grad_norm 1.500 | tok/s 21,162 | data_time_frac 5.7% | peak_vram 2344MiB
+iter    975 | loss 2.4311 | lr 2.93e-04 | grad_norm 1.543 | tok/s 21,188 | data_time_frac 5.6% | peak_vram 2344MiB
+iter   1000 | loss 2.4882 | lr 3.00e-04 | grad_norm 1.454 | tok/s 21,214 | data_time_frac 5.5% | peak_vram 2344MiB
+  eval @ iter 1000: train 2.4136  val 2.4147
+  new best val_loss 2.4147 � saved checkpoints\ablation_003_data_100m\best.pt
+iter   1025 | loss 2.3954 | lr 3.00e-04 | grad_norm 1.258 | tok/s 21,117 | data_time_frac 5.4% | peak_vram 2344MiB
+iter   1050 | loss 2.3114 | lr 3.00e-04 | grad_norm 1.246 | tok/s 21,141 | data_time_frac 5.3% | peak_vram 2344MiB
+iter   1075 | loss 2.3056 | lr 3.00e-04 | grad_norm 1.197 | tok/s 21,166 | data_time_frac 5.3% | peak_vram 2344MiB
+iter   1100 | loss 2.3489 | lr 3.00e-04 | grad_norm 1.196 | tok/s 21,191 | data_time_frac 5.2% | peak_vram 2344MiB
+iter   1125 | loss 2.3080 | lr 3.00e-04 | grad_norm 1.097 | tok/s 21,214 | data_time_frac 5.1% | peak_vram 2344MiB
+iter   1150 | loss 2.2730 | lr 3.00e-04 | grad_norm 1.133 | tok/s 21,234 | data_time_frac 5.0% | peak_vram 2344MiB
+iter   1175 | loss 2.2300 | lr 3.00e-04 | grad_norm 1.013 | tok/s 21,253 | data_time_frac 4.9% | peak_vram 2344MiB
+iter   1200 | loss 2.1854 | lr 2.99e-04 | grad_norm 1.139 | tok/s 21,271 | data_time_frac 4.9% | peak_vram 2344MiB
+iter   1225 | loss 2.1442 | lr 2.99e-04 | grad_norm 1.229 | tok/s 21,291 | data_time_frac 4.8% | peak_vram 2344MiB
+iter   1250 | loss 2.1807 | lr 2.99e-04 | grad_norm 1.101 | tok/s 21,313 | data_time_frac 4.7% | peak_vram 2344MiB
+iter   1275 | loss 2.1331 | lr 2.99e-04 | grad_norm 1.090 | tok/s 21,332 | data_time_frac 4.6% | peak_vram 2344MiB
+iter   1300 | loss 2.1711 | lr 2.99e-04 | grad_norm 1.056 | tok/s 21,351 | data_time_frac 4.6% | peak_vram 2344MiB
+iter   1325 | loss 2.1394 | lr 2.99e-04 | grad_norm 1.048 | tok/s 21,367 | data_time_frac 4.5% | peak_vram 2344MiB
+iter   1350 | loss 2.1109 | lr 2.98e-04 | grad_norm 0.908 | tok/s 21,385 | data_time_frac 4.4% | peak_vram 2344MiB
+iter   1375 | loss 2.1092 | lr 2.98e-04 | grad_norm 1.112 | tok/s 21,399 | data_time_frac 4.4% | peak_vram 2344MiB
+iter   1400 | loss 2.0802 | lr 2.98e-04 | grad_norm 1.056 | tok/s 21,417 | data_time_frac 4.3% | peak_vram 2344MiB
+iter   1425 | loss 2.0829 | lr 2.98e-04 | grad_norm 1.011 | tok/s 21,436 | data_time_frac 4.3% | peak_vram 2344MiB
+iter   1450 | loss 2.1009 | lr 2.97e-04 | grad_norm 0.957 | tok/s 21,450 | data_time_frac 4.2% | peak_vram 2344MiB
+iter   1475 | loss 2.1092 | lr 2.97e-04 | grad_norm 0.954 | tok/s 21,470 | data_time_frac 4.2% | peak_vram 2344MiB
+iter   1500 | loss 2.0417 | lr 2.97e-04 | grad_norm 0.880 | tok/s 21,492 | data_time_frac 4.1% | peak_vram 2344MiB
+  eval @ iter 1500: train 2.0405  val 2.0602
+  new best val_loss 2.0602 � saved checkpoints\ablation_003_data_100m\best.pt
+iter   1525 | loss 2.0176 | lr 2.96e-04 | grad_norm 0.957 | tok/s 21,430 | data_time_frac 4.1% | peak_vram 2344MiB
+iter   1550 | loss 2.0065 | lr 2.96e-04 | grad_norm 0.879 | tok/s 21,442 | data_time_frac 4.0% | peak_vram 2344MiB
+iter   1575 | loss 2.0902 | lr 2.96e-04 | grad_norm 0.825 | tok/s 21,465 | data_time_frac 4.0% | peak_vram 2344MiB
+iter   1600 | loss 2.0165 | lr 2.95e-04 | grad_norm 0.903 | tok/s 21,478 | data_time_frac 3.9% | peak_vram 2344MiB
+iter   1625 | loss 1.9825 | lr 2.95e-04 | grad_norm 0.897 | tok/s 21,487 | data_time_frac 3.9% | peak_vram 2344MiBdevice: NVIDIA GeForce RTX 4070 Laptop GPU | 8.0 GiB | sm_89 | bf16=True
+run: ablation_003_data_100m  precision: bfloat16  max_iters: 8000
+model: 52.9M params (52,901,712)
+resumed from checkpoints\ablation_003_data_100m\latest.pt at iter 2000, best_val_loss=1.9363
+iter   2000 | loss 1.8740 | lr 2.87e-04 | grad_norm 0.730 | tok/s 18,511 | data_time_frac 3.8% | peak_vram 2333MiB
+iter   2025 | loss 1.8351 | lr 2.86e-04 | grad_norm 0.763 | tok/s 24,746 | data_time_frac 3.2% | peak_vram 2336MiB
+iter   2050 | loss 1.8827 | lr 2.85e-04 | grad_norm 0.772 | tok/s 24,192 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   2075 | loss 1.8634 | lr 2.85e-04 | grad_norm 0.819 | tok/s 23,489 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   2100 | loss 1.9117 | lr 2.84e-04 | grad_norm 0.891 | tok/s 23,033 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   2125 | loss 1.8260 | lr 2.83e-04 | grad_norm 0.767 | tok/s 22,705 | data_time_frac 2.3% | peak_vram 2336MiB
+iter   2150 | loss 1.8754 | lr 2.82e-04 | grad_norm 0.757 | tok/s 22,478 | data_time_frac 2.1% | peak_vram 2336MiB
+iter   2175 | loss 1.8509 | lr 2.82e-04 | grad_norm 0.778 | tok/s 22,117 | data_time_frac 3.0% | peak_vram 2336MiB
+iter   2200 | loss 1.8923 | lr 2.81e-04 | grad_norm 0.725 | tok/s 21,696 | data_time_frac 4.3% | peak_vram 2336MiB
+iter   2225 | loss 1.8567 | lr 2.80e-04 | grad_norm 0.727 | tok/s 21,403 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   2250 | loss 1.8773 | lr 2.79e-04 | grad_norm 0.731 | tok/s 21,222 | data_time_frac 5.3% | peak_vram 2336MiB
+iter   2275 | loss 1.8399 | lr 2.78e-04 | grad_norm 0.743 | tok/s 21,165 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   2300 | loss 1.8703 | lr 2.78e-04 | grad_norm 0.735 | tok/s 21,119 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   2325 | loss 1.7797 | lr 2.77e-04 | grad_norm 0.777 | tok/s 21,114 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   2350 | loss 1.7928 | lr 2.76e-04 | grad_norm 0.712 | tok/s 21,171 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   2375 | loss 1.7490 | lr 2.75e-04 | grad_norm 0.778 | tok/s 21,264 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   2400 | loss 1.8596 | lr 2.74e-04 | grad_norm 0.743 | tok/s 21,307 | data_time_frac 4.9% | peak_vram 2336MiB
+iter   2425 | loss 1.7889 | lr 2.73e-04 | grad_norm 0.703 | tok/s 21,303 | data_time_frac 4.8% | peak_vram 2336MiB
+iter   2450 | loss 1.8717 | lr 2.72e-04 | grad_norm 0.689 | tok/s 21,195 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   2475 | loss 1.7665 | lr 2.71e-04 | grad_norm 0.670 | tok/s 21,151 | data_time_frac 4.8% | peak_vram 2336MiB
+iter   2500 | loss 1.7778 | lr 2.71e-04 | grad_norm 0.707 | tok/s 21,093 | data_time_frac 4.7% | peak_vram 2336MiB
+  eval @ iter 2500: train 1.8033  val 1.8111
+  new best val_loss 1.8111 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   2525 | loss 1.8306 | lr 2.70e-04 | grad_norm 0.697 | tok/s 20,722 | data_time_frac 5.2% | peak_vram 2336MiB
+iter   2550 | loss 1.8546 | lr 2.69e-04 | grad_norm 0.686 | tok/s 20,588 | data_time_frac 5.6% | peak_vram 2336MiB
+iter   2575 | loss 1.7932 | lr 2.68e-04 | grad_norm 0.727 | tok/s 20,485 | data_time_frac 6.4% | peak_vram 2336MiB
+iter   2600 | loss 1.7870 | lr 2.67e-04 | grad_norm 0.686 | tok/s 20,403 | data_time_frac 7.3% | peak_vram 2336MiB
+iter   2625 | loss 1.7839 | lr 2.66e-04 | grad_norm 0.694 | tok/s 20,435 | data_time_frac 7.7% | peak_vram 2336MiB
+iter   2650 | loss 1.8460 | lr 2.65e-04 | grad_norm 0.678 | tok/s 20,484 | data_time_frac 7.7% | peak_vram 2336MiB
+iter   2675 | loss 1.7518 | lr 2.64e-04 | grad_norm 0.704 | tok/s 20,521 | data_time_frac 7.7% | peak_vram 2336MiB
+iter   2700 | loss 1.7642 | lr 2.63e-04 | grad_norm 0.680 | tok/s 20,566 | data_time_frac 7.5% | peak_vram 2336MiB
+iter   2725 | loss 1.8218 | lr 2.62e-04 | grad_norm 0.692 | tok/s 20,631 | data_time_frac 7.3% | peak_vram 2336MiB
+iter   2750 | loss 1.7746 | lr 2.60e-04 | grad_norm 0.691 | tok/s 20,686 | data_time_frac 7.2% | peak_vram 2336MiB
+iter   2775 | loss 1.8273 | lr 2.59e-04 | grad_norm 0.700 | tok/s 20,747 | data_time_frac 7.3% | peak_vram 2336MiB
+iter   2800 | loss 1.7224 | lr 2.58e-04 | grad_norm 0.669 | tok/s 20,754 | data_time_frac 7.7% | peak_vram 2336MiB
+iter   2825 | loss 1.7679 | lr 2.57e-04 | grad_norm 0.709 | tok/s 20,820 | data_time_frac 7.8% | peak_vram 2336MiB
+iter   2850 | loss 1.8365 | lr 2.56e-04 | grad_norm 0.669 | tok/s 20,921 | data_time_frac 7.6% | peak_vram 2336MiB
+iter   2875 | loss 1.7697 | lr 2.55e-04 | grad_norm 0.650 | tok/s 21,019 | data_time_frac 7.5% | peak_vram 2336MiB
+iter   2900 | loss 1.7793 | lr 2.54e-04 | grad_norm 0.636 | tok/s 21,109 | data_time_frac 7.4% | peak_vram 2336MiB
+iter   2925 | loss 1.7575 | lr 2.53e-04 | grad_norm 0.652 | tok/s 21,180 | data_time_frac 7.2% | peak_vram 2336MiB
+iter   2950 | loss 1.7293 | lr 2.52e-04 | grad_norm 0.640 | tok/s 21,249 | data_time_frac 7.1% | peak_vram 2336MiB
+iter   2975 | loss 1.6940 | lr 2.50e-04 | grad_norm 0.665 | tok/s 21,307 | data_time_frac 7.0% | peak_vram 2336MiB
+iter   3000 | loss 1.8115 | lr 2.49e-04 | grad_norm 0.662 | tok/s 21,339 | data_time_frac 6.8% | peak_vram 2336MiB
+  eval @ iter 3000: train 1.7344  val 1.7481
+  new best val_loss 1.7481 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   3025 | loss 1.7699 | lr 2.48e-04 | grad_norm 0.646 | tok/s 21,249 | data_time_frac 6.8% | peak_vram 2336MiB
+iter   3050 | loss 1.6881 | lr 2.47e-04 | grad_norm 0.668 | tok/s 21,290 | data_time_frac 6.7% | peak_vram 2336MiB
+iter   3075 | loss 1.6896 | lr 2.46e-04 | grad_norm 0.671 | tok/s 21,337 | data_time_frac 6.6% | peak_vram 2336MiB
+iter   3100 | loss 1.7124 | lr 2.44e-04 | grad_norm 0.691 | tok/s 21,389 | data_time_frac 6.5% | peak_vram 2336MiB
+iter   3125 | loss 1.6554 | lr 2.43e-04 | grad_norm 0.681 | tok/s 21,442 | data_time_frac 6.4% | peak_vram 2336MiB
+iter   3150 | loss 1.7693 | lr 2.42e-04 | grad_norm 0.648 | tok/s 21,488 | data_time_frac 6.3% | peak_vram 2336MiB
+iter   3175 | loss 1.7697 | lr 2.41e-04 | grad_norm 0.662 | tok/s 21,535 | data_time_frac 6.2% | peak_vram 2336MiB
+iter   3200 | loss 1.7298 | lr 2.39e-04 | grad_norm 0.670 | tok/s 21,586 | data_time_frac 6.1% | peak_vram 2336MiB
+iter   3225 | loss 1.6717 | lr 2.38e-04 | grad_norm 0.609 | tok/s 21,627 | data_time_frac 6.0% | peak_vram 2336MiB
+iter   3250 | loss 1.7215 | lr 2.37e-04 | grad_norm 0.661 | tok/s 21,666 | data_time_frac 5.9% | peak_vram 2336MiB
+iter   3275 | loss 1.7408 | lr 2.36e-04 | grad_norm 0.696 | tok/s 21,704 | data_time_frac 5.8% | peak_vram 2336MiB
+iter   3300 | loss 1.6943 | lr 2.34e-04 | grad_norm 0.700 | tok/s 21,746 | data_time_frac 5.8% | peak_vram 2336MiB
+iter   3325 | loss 1.6549 | lr 2.33e-04 | grad_norm 0.634 | tok/s 21,780 | data_time_frac 5.7% | peak_vram 2336MiB
+iter   3350 | loss 1.6933 | lr 2.32e-04 | grad_norm 0.682 | tok/s 21,813 | data_time_frac 5.6% | peak_vram 2336MiB
+iter   3375 | loss 1.6559 | lr 2.30e-04 | grad_norm 0.620 | tok/s 21,847 | data_time_frac 5.5% | peak_vram 2336MiB
+iter   3400 | loss 1.7182 | lr 2.29e-04 | grad_norm 0.689 | tok/s 21,884 | data_time_frac 5.5% | peak_vram 2336MiB
+iter   3425 | loss 1.6732 | lr 2.28e-04 | grad_norm 0.608 | tok/s 21,920 | data_time_frac 5.4% | peak_vram 2336MiB
+iter   3450 | loss 1.6503 | lr 2.26e-04 | grad_norm 0.646 | tok/s 21,950 | data_time_frac 5.3% | peak_vram 2336MiB
+iter   3475 | loss 1.7525 | lr 2.25e-04 | grad_norm 0.705 | tok/s 21,985 | data_time_frac 5.2% | peak_vram 2336MiB
+iter   3500 | loss 1.6660 | lr 2.24e-04 | grad_norm 0.632 | tok/s 22,021 | data_time_frac 5.2% | peak_vram 2336MiB
+  eval @ iter 3500: train 1.6736  val 1.7112
+  new best val_loss 1.7112 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   3525 | loss 1.6180 | lr 2.22e-04 | grad_norm 0.656 | tok/s 21,982 | data_time_frac 5.1% | peak_vram 2336MiB
+iter   3550 | loss 1.6805 | lr 2.21e-04 | grad_norm 0.643 | tok/s 22,017 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   3575 | loss 1.6701 | lr 2.19e-04 | grad_norm 0.626 | tok/s 22,051 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   3600 | loss 1.6641 | lr 2.18e-04 | grad_norm 0.658 | tok/s 22,080 | data_time_frac 4.9% | peak_vram 2336MiB
+iter   3625 | loss 1.6449 | lr 2.17e-04 | grad_norm 0.626 | tok/s 22,107 | data_time_frac 4.9% | peak_vram 2336MiB
+iter   3650 | loss 1.7134 | lr 2.15e-04 | grad_norm 0.740 | tok/s 22,126 | data_time_frac 4.8% | peak_vram 2336MiB
+iter   3675 | loss 1.7699 | lr 2.14e-04 | grad_norm 0.640 | tok/s 22,153 | data_time_frac 4.8% | peak_vram 2336MiB
+iter   3700 | loss 1.7008 | lr 2.12e-04 | grad_norm 0.641 | tok/s 22,187 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   3725 | loss 1.6997 | lr 2.11e-04 | grad_norm 0.628 | tok/s 22,216 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   3750 | loss 1.6080 | lr 2.10e-04 | grad_norm 0.629 | tok/s 22,239 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   3775 | loss 1.7030 | lr 2.08e-04 | grad_norm 0.628 | tok/s 22,261 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   3800 | loss 1.6719 | lr 2.07e-04 | grad_norm 0.619 | tok/s 22,272 | data_time_frac 4.5% | peak_vram 2336MiB
+iter   3825 | loss 1.6396 | lr 2.05e-04 | grad_norm 0.653 | tok/s 22,211 | data_time_frac 4.5% | peak_vram 2336MiB
+iter   3850 | loss 1.6398 | lr 2.04e-04 | grad_norm 0.638 | tok/s 21,386 | data_time_frac 4.3% | peak_vram 2336MiB
+iter   3875 | loss 1.6210 | lr 2.02e-04 | grad_norm 0.638 | tok/s 19,752 | data_time_frac 4.0% | peak_vram 2336MiB
+iter   3900 | loss 1.6585 | lr 2.01e-04 | grad_norm 0.625 | tok/s 19,301 | data_time_frac 3.9% | peak_vram 2336MiB
+iter   3925 | loss 1.6613 | lr 1.99e-04 | grad_norm 0.661 | tok/s 19,190 | data_time_frac 3.9% | peak_vram 2336MiB
+iter   3950 | loss 1.6204 | lr 1.98e-04 | grad_norm 0.605 | tok/s 12,531 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   3975 | loss 1.6867 | lr 1.97e-04 | grad_norm 0.633 | tok/s 11,768 | data_time_frac 2.4% | peak_vram 2336MiB
+iter   4000 | loss 1.6188 | lr 1.95e-04 | grad_norm 0.647 | tok/s 11,762 | data_time_frac 2.5% | peak_vram 2336MiB
+  eval @ iter 4000: train 1.6280  val 1.6820
+  new best val_loss 1.6820 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   4025 | loss 1.5630 | lr 1.94e-04 | grad_norm 0.633 | tok/s 11,718 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4050 | loss 1.5776 | lr 1.92e-04 | grad_norm 0.616 | tok/s 11,708 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4075 | loss 1.6756 | lr 1.91e-04 | grad_norm 0.604 | tok/s 11,791 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4100 | loss 1.5631 | lr 1.89e-04 | grad_norm 0.653 | tok/s 11,876 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4125 | loss 1.7586 | lr 1.88e-04 | grad_norm 0.628 | tok/s 11,957 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4150 | loss 1.6525 | lr 1.86e-04 | grad_norm 0.606 | tok/s 12,035 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4175 | loss 1.5994 | lr 1.85e-04 | grad_norm 0.647 | tok/s 12,111 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4200 | loss 1.5970 | lr 1.83e-04 | grad_norm 0.613 | tok/s 12,185 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4225 | loss 1.6139 | lr 1.82e-04 | grad_norm 0.613 | tok/s 12,258 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4250 | loss 1.6160 | lr 1.80e-04 | grad_norm 0.605 | tok/s 12,331 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4275 | loss 1.6530 | lr 1.79e-04 | grad_norm 0.635 | tok/s 12,397 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4300 | loss 1.6255 | lr 1.77e-04 | grad_norm 0.635 | tok/s 12,467 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4325 | loss 1.5468 | lr 1.76e-04 | grad_norm 0.618 | tok/s 12,534 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4350 | loss 1.6631 | lr 1.74e-04 | grad_norm 0.593 | tok/s 12,598 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4375 | loss 1.6165 | lr 1.73e-04 | grad_norm 0.610 | tok/s 12,648 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4400 | loss 1.6008 | lr 1.71e-04 | grad_norm 0.673 | tok/s 12,699 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4425 | loss 1.6042 | lr 1.70e-04 | grad_norm 0.635 | tok/s 12,747 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4450 | loss 1.6167 | lr 1.68e-04 | grad_norm 0.639 | tok/s 12,792 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4475 | loss 1.6234 | lr 1.67e-04 | grad_norm 0.617 | tok/s 12,842 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4500 | loss 1.5741 | lr 1.65e-04 | grad_norm 0.620 | tok/s 12,891 | data_time_frac 2.5% | peak_vram 2336MiB
+  eval @ iter 4500: train 1.6382  val 1.6657
+  new best val_loss 1.6657 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   4525 | loss 1.6153 | lr 1.63e-04 | grad_norm 0.661 | tok/s 12,921 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4550 | loss 1.5605 | lr 1.62e-04 | grad_norm 0.596 | tok/s 12,959 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4575 | loss 1.6052 | lr 1.60e-04 | grad_norm 0.638 | tok/s 13,004 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4600 | loss 1.6216 | lr 1.59e-04 | grad_norm 0.633 | tok/s 13,059 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4625 | loss 1.6520 | lr 1.57e-04 | grad_norm 0.609 | tok/s 13,116 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4650 | loss 1.5309 | lr 1.56e-04 | grad_norm 0.603 | tok/s 13,168 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4675 | loss 1.6894 | lr 1.54e-04 | grad_norm 0.645 | tok/s 13,222 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4700 | loss 1.6093 | lr 1.53e-04 | grad_norm 0.646 | tok/s 13,275 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4725 | loss 1.5581 | lr 1.51e-04 | grad_norm 0.624 | tok/s 13,329 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4750 | loss 1.6911 | lr 1.50e-04 | grad_norm 0.619 | tok/s 13,380 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4775 | loss 1.6490 | lr 1.48e-04 | grad_norm 0.606 | tok/s 13,432 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4800 | loss 1.5299 | lr 1.47e-04 | grad_norm 0.588 | tok/s 13,482 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4825 | loss 1.5905 | lr 1.45e-04 | grad_norm 0.617 | tok/s 13,530 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   4850 | loss 1.5988 | lr 1.44e-04 | grad_norm 0.630 | tok/s 13,574 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4875 | loss 1.6033 | lr 1.42e-04 | grad_norm 0.609 | tok/s 13,621 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4900 | loss 1.5082 | lr 1.41e-04 | grad_norm 0.601 | tok/s 13,666 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4925 | loss 1.5455 | lr 1.39e-04 | grad_norm 0.610 | tok/s 13,703 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4950 | loss 1.5891 | lr 1.38e-04 | grad_norm 0.638 | tok/s 13,738 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   4975 | loss 1.6100 | lr 1.36e-04 | grad_norm 0.603 | tok/s 13,776 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5000 | loss 1.6084 | lr 1.35e-04 | grad_norm 0.623 | tok/s 13,814 | data_time_frac 2.5% | peak_vram 2336MiB
+  eval @ iter 5000: train 1.5615  val 1.5940
+  new best val_loss 1.5940 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   5025 | loss 1.5611 | lr 1.33e-04 | grad_norm 0.642 | tok/s 13,834 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5050 | loss 1.6254 | lr 1.32e-04 | grad_norm 0.625 | tok/s 13,876 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5075 | loss 1.5698 | lr 1.31e-04 | grad_norm 0.626 | tok/s 13,918 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5100 | loss 1.5118 | lr 1.29e-04 | grad_norm 0.634 | tok/s 13,959 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5125 | loss 1.4951 | lr 1.28e-04 | grad_norm 0.607 | tok/s 13,998 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5150 | loss 1.5415 | lr 1.26e-04 | grad_norm 0.607 | tok/s 14,035 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5175 | loss 1.5602 | lr 1.25e-04 | grad_norm 0.624 | tok/s 14,071 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5200 | loss 1.5480 | lr 1.23e-04 | grad_norm 0.651 | tok/s 14,106 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5225 | loss 1.5897 | lr 1.22e-04 | grad_norm 0.640 | tok/s 14,140 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5250 | loss 1.5320 | lr 1.20e-04 | grad_norm 0.618 | tok/s 14,175 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5275 | loss 1.4941 | lr 1.19e-04 | grad_norm 0.604 | tok/s 14,209 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5300 | loss 1.5322 | lr 1.18e-04 | grad_norm 0.633 | tok/s 14,244 | data_time_frac 2.5% | peak_vram 2336MiB
+iter   5325 | loss 1.5284 | lr 1.16e-04 | grad_norm 0.629 | tok/s 14,287 | data_time_frac 2.4% | peak_vram 2336MiBdevice: NVIDIA GeForce RTX 4070 Laptop GPU | 8.0 GiB | sm_89 | bf16=True
+run: ablation_003_data_100m  precision: bfloat16  max_iters: 8000
+model: 52.9M params (52,901,712)
+resumed from checkpoints\ablation_003_data_100m\latest.pt at iter 6000, best_val_loss=1.5940
+iter   6000 | loss 1.5667 | lr 8.08e-05 | grad_norm 0.665 | tok/s 23,071 | data_time_frac 3.8% | peak_vram 2333MiB
+iter   6025 | loss 1.5774 | lr 7.96e-05 | grad_norm 0.658 | tok/s 28,943 | data_time_frac 4.9% | peak_vram 2336MiB
+iter   6050 | loss 1.5177 | lr 7.85e-05 | grad_norm 0.610 | tok/s 28,009 | data_time_frac 4.3% | peak_vram 2336MiB
+iter   6075 | loss 1.4705 | lr 7.73e-05 | grad_norm 0.640 | tok/s 27,310 | data_time_frac 3.9% | peak_vram 2336MiB
+iter   6100 | loss 1.5030 | lr 7.62e-05 | grad_norm 0.627 | tok/s 26,874 | data_time_frac 3.7% | peak_vram 2336MiB
+iter   6125 | loss 1.5050 | lr 7.50e-05 | grad_norm 0.646 | tok/s 26,629 | data_time_frac 3.2% | peak_vram 2336MiB
+iter   6150 | loss 1.4812 | lr 7.39e-05 | grad_norm 0.612 | tok/s 26,420 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   6175 | loss 1.5536 | lr 7.28e-05 | grad_norm 0.621 | tok/s 26,290 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   6200 | loss 1.4658 | lr 7.17e-05 | grad_norm 0.619 | tok/s 26,198 | data_time_frac 2.4% | peak_vram 2336MiB
+iter   6225 | loss 1.5184 | lr 7.06e-05 | grad_norm 0.642 | tok/s 26,093 | data_time_frac 2.3% | peak_vram 2336MiB
+iter   6250 | loss 1.5196 | lr 6.95e-05 | grad_norm 0.613 | tok/s 26,025 | data_time_frac 2.1% | peak_vram 2336MiB
+iter   6275 | loss 1.5341 | lr 6.85e-05 | grad_norm 0.620 | tok/s 25,783 | data_time_frac 2.1% | peak_vram 2336MiB
+iter   6300 | loss 1.4353 | lr 6.74e-05 | grad_norm 0.619 | tok/s 25,647 | data_time_frac 2.2% | peak_vram 2336MiB
+iter   6325 | loss 1.5674 | lr 6.64e-05 | grad_norm 0.639 | tok/s 25,588 | data_time_frac 2.2% | peak_vram 2336MiB
+iter   6350 | loss 1.5437 | lr 6.54e-05 | grad_norm 0.638 | tok/s 25,482 | data_time_frac 2.3% | peak_vram 2336MiB
+iter   6375 | loss 1.4900 | lr 6.43e-05 | grad_norm 0.645 | tok/s 25,370 | data_time_frac 2.3% | peak_vram 2336MiB
+iter   6400 | loss 1.4571 | lr 6.33e-05 | grad_norm 0.594 | tok/s 25,304 | data_time_frac 2.3% | peak_vram 2336MiB
+iter   6425 | loss 1.4803 | lr 6.23e-05 | grad_norm 0.650 | tok/s 25,171 | data_time_frac 2.4% | peak_vram 2336MiB
+iter   6450 | loss 1.4817 | lr 6.14e-05 | grad_norm 0.625 | tok/s 25,053 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   6475 | loss 1.4726 | lr 6.04e-05 | grad_norm 0.636 | tok/s 24,694 | data_time_frac 4.3% | peak_vram 2336MiB
+iter   6500 | loss 1.5361 | lr 5.95e-05 | grad_norm 0.632 | tok/s 24,239 | data_time_frac 6.2% | peak_vram 2336MiB
+  eval @ iter 6500: train 1.4986  val 1.5962
+iter   6525 | loss 1.4730 | lr 5.85e-05 | grad_norm 0.606 | tok/s 23,932 | data_time_frac 6.0% | peak_vram 2336MiB
+iter   6550 | loss 1.5029 | lr 5.76e-05 | grad_norm 0.624 | tok/s 23,859 | data_time_frac 5.8% | peak_vram 2336MiB
+iter   6575 | loss 1.5251 | lr 5.67e-05 | grad_norm 0.656 | tok/s 23,802 | data_time_frac 5.5% | peak_vram 2336MiB
+iter   6600 | loss 1.4673 | lr 5.58e-05 | grad_norm 0.621 | tok/s 23,755 | data_time_frac 5.3% | peak_vram 2336MiB
+iter   6625 | loss 1.4382 | lr 5.49e-05 | grad_norm 0.611 | tok/s 23,712 | data_time_frac 5.2% | peak_vram 2336MiB
+iter   6650 | loss 1.5485 | lr 5.40e-05 | grad_norm 0.639 | tok/s 23,673 | data_time_frac 5.0% | peak_vram 2336MiB
+iter   6675 | loss 1.4677 | lr 5.32e-05 | grad_norm 0.604 | tok/s 23,652 | data_time_frac 4.8% | peak_vram 2336MiB
+iter   6700 | loss 1.5790 | lr 5.23e-05 | grad_norm 0.660 | tok/s 23,624 | data_time_frac 4.7% | peak_vram 2336MiB
+iter   6725 | loss 1.5019 | lr 5.15e-05 | grad_norm 0.632 | tok/s 23,626 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   6750 | loss 1.5004 | lr 5.07e-05 | grad_norm 0.642 | tok/s 23,618 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   6775 | loss 1.4382 | lr 4.99e-05 | grad_norm 0.636 | tok/s 23,590 | data_time_frac 4.6% | peak_vram 2336MiB
+iter   6800 | loss 1.4765 | lr 4.91e-05 | grad_norm 0.621 | tok/s 23,576 | data_time_frac 4.5% | peak_vram 2336MiB
+iter   6825 | loss 1.5876 | lr 4.83e-05 | grad_norm 0.644 | tok/s 23,551 | data_time_frac 4.4% | peak_vram 2336MiB
+iter   6850 | loss 1.4810 | lr 4.76e-05 | grad_norm 0.622 | tok/s 23,527 | data_time_frac 4.3% | peak_vram 2336MiB
+iter   6875 | loss 1.4375 | lr 4.68e-05 | grad_norm 0.605 | tok/s 23,509 | data_time_frac 4.2% | peak_vram 2336MiB
+iter   6900 | loss 1.4516 | lr 4.61e-05 | grad_norm 0.628 | tok/s 23,492 | data_time_frac 4.1% | peak_vram 2336MiB
+iter   6925 | loss 1.4178 | lr 4.54e-05 | grad_norm 0.639 | tok/s 23,481 | data_time_frac 4.0% | peak_vram 2336MiB
+iter   6950 | loss 1.5037 | lr 4.47e-05 | grad_norm 0.614 | tok/s 23,473 | data_time_frac 4.0% | peak_vram 2336MiB
+iter   6975 | loss 1.4113 | lr 4.40e-05 | grad_norm 0.650 | tok/s 23,463 | data_time_frac 3.9% | peak_vram 2336MiB
+iter   7000 | loss 1.4808 | lr 4.34e-05 | grad_norm 0.640 | tok/s 23,450 | data_time_frac 3.8% | peak_vram 2336MiB
+  eval @ iter 7000: train 1.5096  val 1.5472
+  new best val_loss 1.5472 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   7025 | loss 1.5112 | lr 4.27e-05 | grad_norm 0.680 | tok/s 23,319 | data_time_frac 3.7% | peak_vram 2336MiB
+iter   7050 | loss 1.4504 | lr 4.21e-05 | grad_norm 0.642 | tok/s 23,311 | data_time_frac 3.7% | peak_vram 2336MiB
+iter   7075 | loss 1.4881 | lr 4.15e-05 | grad_norm 0.622 | tok/s 23,290 | data_time_frac 3.7% | peak_vram 2336MiB
+iter   7100 | loss 1.5016 | lr 4.09e-05 | grad_norm 0.624 | tok/s 23,270 | data_time_frac 3.6% | peak_vram 2336MiB
+iter   7125 | loss 1.5618 | lr 4.03e-05 | grad_norm 0.653 | tok/s 23,259 | data_time_frac 3.6% | peak_vram 2336MiB
+iter   7150 | loss 1.4746 | lr 3.97e-05 | grad_norm 0.624 | tok/s 23,252 | data_time_frac 3.5% | peak_vram 2336MiB
+iter   7175 | loss 1.4666 | lr 3.91e-05 | grad_norm 0.630 | tok/s 23,273 | data_time_frac 3.5% | peak_vram 2336MiB
+iter   7200 | loss 1.5022 | lr 3.86e-05 | grad_norm 0.642 | tok/s 23,264 | data_time_frac 3.4% | peak_vram 2336MiB
+iter   7225 | loss 1.4623 | lr 3.81e-05 | grad_norm 0.626 | tok/s 23,258 | data_time_frac 3.4% | peak_vram 2336MiB
+iter   7250 | loss 1.5045 | lr 3.76e-05 | grad_norm 0.647 | tok/s 23,271 | data_time_frac 3.4% | peak_vram 2336MiB
+iter   7275 | loss 1.4725 | lr 3.71e-05 | grad_norm 0.639 | tok/s 23,284 | data_time_frac 3.3% | peak_vram 2336MiB
+iter   7300 | loss 1.5142 | lr 3.66e-05 | grad_norm 0.644 | tok/s 23,295 | data_time_frac 3.3% | peak_vram 2336MiB
+iter   7325 | loss 1.4026 | lr 3.61e-05 | grad_norm 0.644 | tok/s 23,303 | data_time_frac 3.2% | peak_vram 2336MiB
+iter   7350 | loss 1.5367 | lr 3.57e-05 | grad_norm 0.646 | tok/s 23,314 | data_time_frac 3.2% | peak_vram 2336MiB
+iter   7375 | loss 1.4671 | lr 3.53e-05 | grad_norm 0.650 | tok/s 23,325 | data_time_frac 3.2% | peak_vram 2336MiB
+iter   7400 | loss 1.4618 | lr 3.49e-05 | grad_norm 0.645 | tok/s 23,334 | data_time_frac 3.1% | peak_vram 2336MiB
+iter   7425 | loss 1.5255 | lr 3.45e-05 | grad_norm 0.621 | tok/s 23,336 | data_time_frac 3.1% | peak_vram 2336MiB
+iter   7450 | loss 1.5188 | lr 3.41e-05 | grad_norm 0.644 | tok/s 23,340 | data_time_frac 3.1% | peak_vram 2336MiB
+iter   7475 | loss 1.4260 | lr 3.37e-05 | grad_norm 0.652 | tok/s 23,344 | data_time_frac 3.1% | peak_vram 2336MiB
+iter   7500 | loss 1.4779 | lr 3.34e-05 | grad_norm 0.632 | tok/s 23,352 | data_time_frac 3.0% | peak_vram 2336MiB
+  eval @ iter 7500: train 1.4833  val 1.5230
+  new best val_loss 1.5230 — saved checkpoints\ablation_003_data_100m\best.pt
+iter   7525 | loss 1.5239 | lr 3.31e-05 | grad_norm 0.640 | tok/s 23,269 | data_time_frac 3.0% | peak_vram 2336MiB
+iter   7550 | loss 1.4793 | lr 3.27e-05 | grad_norm 0.636 | tok/s 23,270 | data_time_frac 3.0% | peak_vram 2336MiB
+iter   7575 | loss 1.4795 | lr 3.24e-05 | grad_norm 0.661 | tok/s 23,267 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   7600 | loss 1.4339 | lr 3.22e-05 | grad_norm 0.650 | tok/s 23,272 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   7625 | loss 1.4221 | lr 3.19e-05 | grad_norm 0.663 | tok/s 23,276 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   7650 | loss 1.4834 | lr 3.17e-05 | grad_norm 0.658 | tok/s 23,286 | data_time_frac 2.9% | peak_vram 2336MiB
+iter   7675 | loss 1.5330 | lr 3.14e-05 | grad_norm 0.646 | tok/s 23,299 | data_time_frac 2.8% | peak_vram 2336MiB
+iter   7700 | loss 1.5172 | lr 3.12e-05 | grad_norm 0.634 | tok/s 23,307 | data_time_frac 2.8% | peak_vram 2336MiB
+iter   7725 | loss 1.4960 | lr 3.10e-05 | grad_norm 0.639 | tok/s 23,308 | data_time_frac 2.8% | peak_vram 2336MiB
+iter   7750 | loss 1.4958 | lr 3.08e-05 | grad_norm 0.649 | tok/s 23,322 | data_time_frac 2.8% | peak_vram 2336MiB
+iter   7775 | loss 1.5087 | lr 3.07e-05 | grad_norm 0.671 | tok/s 23,327 | data_time_frac 2.8% | peak_vram 2336MiB
+iter   7800 | loss 1.4762 | lr 3.05e-05 | grad_norm 0.667 | tok/s 23,332 | data_time_frac 2.7% | peak_vram 2336MiB
+iter   7825 | loss 1.4587 | lr 3.04e-05 | grad_norm 0.667 | tok/s 23,344 | data_time_frac 2.7% | peak_vram 2336MiB
+iter   7850 | loss 1.4223 | lr 3.03e-05 | grad_norm 0.650 | tok/s 23,346 | data_time_frac 2.7% | peak_vram 2336MiB
+iter   7875 | loss 1.4803 | lr 3.02e-05 | grad_norm 0.656 | tok/s 23,353 | data_time_frac 2.7% | peak_vram 2336MiB
+iter   7900 | loss 1.5050 | lr 3.01e-05 | grad_norm 0.670 | tok/s 23,357 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   7925 | loss 1.4762 | lr 3.01e-05 | grad_norm 0.650 | tok/s 23,356 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   7950 | loss 1.4522 | lr 3.00e-05 | grad_norm 0.655 | tok/s 23,360 | data_time_frac 2.6% | peak_vram 2336MiB
+iter   7975 | loss 1.5183 | lr 3.00e-05 | grad_norm 0.669 | tok/s 23,358 | data_time_frac 2.6% | peak_vram 2336MiB
+done. final checkpoint: checkpoints\ablation_003_data_100m\latest.pt

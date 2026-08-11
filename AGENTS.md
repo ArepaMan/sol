@@ -129,7 +129,7 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M6 complete.** Next: M7 (ablations + seed variance).
+**M0–M7 complete.** Next: M8 (inference CLI, Gradio demo, HF Space).
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -156,7 +156,17 @@ disproportionate interview weight.
       1.47/5 out-of-domain (expected). Found and traced (not assumed) a mojibake artifact
       in 6.20% of TinyStories' own train documents — inherited from upstream, not a bug
       in this repo. Full writeup: `eval/results.md`, `docs/ROADMAP.md` M6 section.
-- [ ] M7 ablations / M8 demo
+- [x] M7 ablations: `configs/ablations/*.yaml` (6 configs covering 8 logical arms via a
+      shared run — see `002_lr_3e-4.yaml`'s header), `scripts/eval_ablation_checkpoints.py`,
+      `experiments/{002_lr_sweep,003_data_scale,004_seed_variance}/results.md`.
+      **Seed variance (yardstick): 4.490 ± 0.0045 ppl** across seeds 42/43/44. **LR sweep**:
+      1e-3 best (4.162 ppl), 20–200× the seed-noise floor — large, real effect. **Data
+      scale**: full corpus beats 100M tokens but only by 18× seed noise (4.489 vs 4.572
+      ppl) — small, the milestone's stated honest negative result. `src/data.py`'s
+      `max_train_tokens` cap on `BinDataset` is now actually enforced (was
+      descriptive-only through M6; confirmed a no-op at the full-corpus value). Full
+      writeup: `docs/ROADMAP.md` M7 section.
+- [ ] M8 demo
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
 RTX 4070 Laptop (sm_89), 89 tests passing. `gradient_checkpointing` flipped to

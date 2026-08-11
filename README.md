@@ -8,11 +8,14 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-✅ **M0–M6 complete** — environment, data pipeline, EDA, model, training loop, baseline
-run, and the full evaluation harness are all done. **Sol-001: val perplexity 3.719, 95%
+✅ **M0–M7 complete** — environment, data pipeline, EDA, model, training loop, baseline
+run, evaluation harness, and ablations are all done. **Sol-001: val perplexity 3.719, 95%
 CI [3.693, 3.745]** on the full 15,141-document val set — vs a trigram baseline at 23.4
 and a unigram baseline at 379.0 (`eval/results.md`). `src/model.py` measures at
-**52,901,712 params**. M7 (ablations + seed variance) is next.
+**52,901,712 params**. Ablations (M7): learning rate has by far the largest effect
+(20–200× seed-to-seed noise); data scale (100M vs full corpus) matters, but only
+narrowly (`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
+`experiments/004_seed_variance/`). M8 (inference CLI, Gradio demo) is next.
 
 See [`docs/DATA_CARD.md`](docs/DATA_CARD.md) for the full dataset writeup, including a
 real bug caught and fixed mid-pipeline: validation's "28.67% duplicate rate" turned out
@@ -59,6 +62,19 @@ Full breakdown, baselines table, per-length-bucket perplexity, and the qualitati
 rubric: [`eval/results.md`](eval/results.md).
 
 ![Baseline loss curve](experiments/001_baseline/loss_curve.png)
+
+**Ablations (M7)**, all at a reduced 8000-iter budget with seed variance as the yardstick
+(4.490 ± 0.0045 ppl across 3 seeds — n=3, so this range substitutes for a t-test rather
+than pretending one is meaningful):
+
+| Ablation | Result | vs seed-noise floor |
+|---|---|---|
+| Learning rate: 1e-4 / 3e-4 / 1e-3 | 5.380 / 4.489 / **4.162** ppl | 20–200× — real, large effect |
+| Data scale: 100M vs full corpus | 4.572 / **4.489** ppl | 18× — real, but small (the milestone's honest negative result) |
+
+Full writeups: [`experiments/002_lr_sweep/results.md`](experiments/002_lr_sweep/results.md),
+[`experiments/003_data_scale/results.md`](experiments/003_data_scale/results.md),
+[`experiments/004_seed_variance/results.md`](experiments/004_seed_variance/results.md).
 
 ## How to run
 

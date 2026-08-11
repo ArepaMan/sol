@@ -129,13 +129,12 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M7 complete. M8 code complete; weights published, live demo deploy pending.**
-Weights are at <https://huggingface.co/SpicyGuac/sol-001>. **The free HF Space plan
-died mid-milestone** — HF moved Gradio Spaces behind PRO (`402 Payment Required`),
-so the demo was ported to Streamlit Community Cloud (`app/streamlit_app.py`),
-whose **1 GB RAM ceiling** is now the binding deployment constraint. The final
-deploy is a GitHub-OAuth web flow at share.streamlit.io that only the owner can
-complete. Next: M9 (docs, spec de-drift, portfolio wiring). See `docs/DEPLOY.md`.
+**M0–M8 complete.** Live demo: <https://sol-52m.streamlit.app> · weights:
+<https://huggingface.co/SpicyGuac/sol-001>. **The free HF Space plan died
+mid-milestone** — HF moved Gradio Spaces behind PRO (`402 Payment Required`), so
+the demo was ported to Streamlit Community Cloud (`app/streamlit_app.py`), whose
+**1 GB RAM ceiling** is the binding deployment constraint. Next: M9 (docs, spec
+de-drift, portfolio wiring). See `docs/DEPLOY.md`. See `docs/DEPLOY.md`.
 
 - [x] Folder scaffold, `.gitignore`
 - [x] `AGENTS.md`, `docs/PROJECT.md`, `docs/ROADMAP.md`, Cursor rule
@@ -191,7 +190,17 @@ complete. Next: M9 (docs, spec de-drift, portfolio wiring). See `docs/DEPLOY.md`
       **1 GB RAM ceiling** is the constraint — measured 786 MB with the CUDA torch
       wheel, ~600 MB estimated with the CPU-only wheel the deploy installs.
       `@st.cache_resource` is load-bearing for memory, not just speed.
-- [ ] M8 deploy + incognito check — share.streamlit.io, owner-only OAuth flow. **Not done.**
+- [x] M8 deployed + incognito check: <https://sol-52m.streamlit.app>, verified from a
+      session with no cookies for the owner's account. **Deployed: 6.7 s model load
+      (vs 30–60 s predicted — the estimate extrapolated home bandwidth for the 103 MiB
+      pull; the container's network is much faster) and 16.0 tok/s (199 tokens / 12.4 s),
+      the low end of the predicted 15–25 band.** Two build failures on the way, both
+      documented in `docs/DEPLOY.md`: Community Cloud now defaults to **Python 3.14**
+      (torch 2.6.0 has no wheels past 3.13 — set 3.12 in Advanced settings, which cannot
+      be changed after creation), and a bare `torch==2.6.0` pulls the **CUDA** wheel even
+      with the CPU index listed, since `--extra-index-url` is additive not preferential —
+      pin `torch==2.6.0+cpu`.
+- [ ] M8 residual: a true wake-from-sleep cold start (needs 12 h idle) is still unmeasured.
 - [ ] M9 docs, spec de-drift, portfolio wiring
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,

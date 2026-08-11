@@ -1,5 +1,8 @@
 # Deploying Sol
 
+**Live: <https://sol-52m.streamlit.app>** · Weights:
+<https://huggingface.co/SpicyGuac/sol-001>
+
 Sol ships as three pieces:
 
 | Where | What | Why separate |
@@ -201,19 +204,23 @@ was the HF Space number the roadmap assumed). Waking one pays for container
 start + Python imports + weight download (cached to disk unless the container
 was rebuilt) + model load.
 
-**Measured locally**, which bounds the parts that aren't hosting-dependent:
+| Stage | Local | **Deployed (Community Cloud)** |
+|---|---|---|
+| `SolGenerator.from_pretrained`, bundle already local | 1.2 s | — |
+| `SolGenerator.from_pretrained`, cold HF cache (103 MiB download) | 8.7 s | — |
+| **Model load, first visit after a fresh deploy** | ~25 s (incl. imports) | **6.7 s** |
 
-| Stage | Time |
-|---|---|
-| `import torch` + `import streamlit` + `src` | ~16 s |
-| `SolGenerator.from_pretrained`, bundle already local | 1.2 s |
-| `SolGenerator.from_pretrained`, **cold HF cache** (downloads 103 MiB) | 8.7 s |
-| **Total to "model ready", cold cache** | **~25 s** |
+The deployed number came in **well under** the 30–60 s predicted. The container's
+network is much faster than a home connection for the 103 MiB pull, which more
+than offsets its slower CPU — the estimate was wrong in the useful direction,
+and it was wrong because it extrapolated from local bandwidth.
 
-Community Cloud's CPU is slower than this machine, so **30–60 s is the honest
-expected range** for a wake-from-sleep. Replace this paragraph with the measured
-number once the app has actually slept and been woken — do not quote the local
-figure as if it were the deployed one.
+**Still unmeasured: a true wake-from-sleep.** 6.7 s is a *fresh deploy* with a
+warm container. Community Cloud sleeps an app after 12 h idle, and waking one
+additionally pays for container start. That number requires waiting 12 h without
+traffic; it is not something a deploy can measure on the day. The in-UI copy
+says "~30-60s" — deliberately conservative until there is a real figure to
+replace it with.
 
 Mitigations, all already in the code:
 
@@ -238,11 +245,14 @@ Measured with `python -m src.infer --model-dir export/sol-001 --device cpu
 | Device | Rate |
 |---|---|
 | RTX 4070 Laptop (bf16) | ~90 tok/s |
-| This machine's CPU (fp32) | **21.6–24.6 tok/s** |
+| This machine's CPU (fp32) | 21.6–24.6 tok/s |
+| **Community Cloud, deployed (fp32)** | **16.0 tok/s** — 199 tokens in 12.4 s |
 
-Community Cloud's shared CPU will land at or below the local CPU number — expect
-roughly 15–25 tok/s, i.e. a 200-token story in 8–13 s once the model is warm.
-That is why the app streams token-by-token rather than returning one block.
+The deployed rate landed at the bottom of the predicted 15–25 tok/s band, about
+32% below this machine's CPU — a shared vCPU, as expected. A 200-token story
+takes ~12 s, which is exactly why the app streams token-by-token instead of
+returning one block at the end: 12 s of nothing reads as broken, 12 s of text
+arriving reads as thinking.
 
 `src/infer.py` uses fp32 on CPU deliberately (`resolve_dtype`): CPU bf16 runs
 through reference kernels on most x86 parts and is slower than fp32, and since

@@ -8,17 +8,20 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-✅ **M0–M7 complete**, **M8 code complete** — environment, data pipeline, EDA, model,
-training loop, baseline run, evaluation harness, ablations, and the inference CLI +
-Gradio demo are all done. **Sol-001: val perplexity 3.719, 95% CI [3.693, 3.745]** on
+🚀 **Live demo: <https://sol-52m.streamlit.app>** · Weights:
+[`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001)
+
+✅ **M0–M8 complete** — environment, data pipeline, EDA, model,
+training loop, baseline run, evaluation harness, ablations, and a deployed demo
+are all done. **Sol-001: val perplexity 3.719, 95% CI [3.693, 3.745]** on
 the full 15,141-document val set — vs a trigram baseline at 23.4 and a unigram baseline
 at 379.0 (`eval/results.md`). `src/model.py` measures at **52,901,712 params**.
 Ablations (M7): learning rate has by far the largest effect (20–200× seed-to-seed
 noise); data scale (100M vs full corpus) matters, but only narrowly
 (`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
-`experiments/004_seed_variance/`). Weights are published to
-[`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001); the live demo deploy is
-the single open M8 item — see [`docs/DEPLOY.md`](docs/DEPLOY.md).
+`experiments/004_seed_variance/`). The demo runs at **16.0 tok/s** on a free shared
+vCPU, loading in 6.7 s — see [`docs/DEPLOY.md`](docs/DEPLOY.md). M9 (docs, spec
+de-drift, portfolio wiring) is next.
 
 > **A note on hosting, because it changed the plan.** M8 targeted a free Hugging Face
 > Space. Hugging Face has since moved Gradio Spaces behind a PRO subscription

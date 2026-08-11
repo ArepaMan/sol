@@ -82,12 +82,13 @@ was measured, not just asserted, and points at the artifact that backs it.
 
 ## Deployment (M8 findings — `docs/DEPLOY.md`, `app/`)
 
-- **CPU inference is ~4× slower than the GPU, and that is the demo's real
-  speed.** Measured: 21.6 tok/s on this machine's CPU (fp32) vs ~90 tok/s on
-  the RTX 4070 (bf16), both from `src/infer.py --seed 42 --max-new-tokens
-  200`. The free HF Space has 2 vCPU and will be slower still. A 200-token
-  story is a ~10-15 second wait there, which is why the demo streams rather
-  than returning one block at the end.
+- **CPU inference is ~5.6× slower than the GPU, and that is the demo's real
+  speed.** Measured on the deployed app (<https://sol-52m.streamlit.app>):
+  **16.0 tok/s**, 199 tokens in 12.4 s. Locally: 21.6–24.6 tok/s on this
+  machine's CPU (fp32) and ~90 tok/s on the RTX 4070 (bf16). A 200-token story
+  is a ~12 second wait, which is why the demo streams rather than returning one
+  block — 12 s of nothing reads as broken, 12 s of arriving text reads as
+  thinking.
 - **Sampling is reproducible per device, not across devices.** `--seed 42`
   twice on the same device is byte-identical (an M8 exit criterion; timing
   output goes to stderr so the diff is clean). CUDA seed 42 and CPU seed 42

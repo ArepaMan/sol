@@ -16,7 +16,7 @@ Legend: **[P]** = also touches the portfolio repo.
 | 5 | ✅ Baseline run 001 | 1 h | 12–24 h | |
 | 6 | ✅ Eval harness | 6–8 h | 1 h | |
 | 7 | ✅ Ablations + seed variance | 3 h | 20–40 h | |
-| 8 | 🟡 Infer CLI, Gradio, HF Space | 6–8 h | — | code done; publish pending |
+| 8 | ✅ Infer CLI, demo, live deploy | 6–8 h | — | Streamlit, not HF Space — see M8 |
 | 9 | Docs, spec de-drift, portfolio wiring | 6–8 h | — | ✅ |
 
 **Minimum viable cut** if time runs short: M0→M1→M2→M3→M4→M5→M6 (perplexity + baselines
@@ -545,8 +545,8 @@ new capability. That's a scope cut, not an oversight.
 |---|---|
 | `--seed 42` twice → byte-identical | ✅ verified. Needed one fix: timing output moved to **stderr**, since wall-clock on stdout can never diff clean. |
 | CPU latency recorded | ✅ **21.6–24.6 tok/s** (fp32, this machine's CPU) vs ~90 tok/s on the 4070 (bf16). Inside the 15–40 tok/s the spec predicted. |
-| Cold start measured | 🟡 measured **locally**: ~16 s imports + 8.7 s from a cold HF cache (of which ~7.5 s is downloading 103 MiB) = ~25 s to model-ready. The deployed number needs an app that has actually slept; `docs/DEPLOY.md` says so rather than quoting the local figure as the real one. |
-| Public demo generates in incognito | 🟡 weights published to [`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001) and the cold-cache download path verified end-to-end. The app itself awaits the owner's Community Cloud deploy (a GitHub-OAuth web flow only they can complete). |
+| Cold start measured | ✅ **6.7 s** to model-ready on the deployed app — well under the 30–60 s predicted. The estimate extrapolated from *local* bandwidth for the 103 MiB pull; the container's network is far faster, which more than offsets its slower CPU. A true wake-from-sleep (12 h idle) is still unmeasured and is called out as such in `docs/DEPLOY.md` rather than papered over with this number. |
+| Public demo generates in incognito | ✅ **<https://sol-52m.streamlit.app>** — verified from a browser session with no cookies or login for the owner's account: streamed token-by-token and stopped itself at 199 tokens on a complete sentence. **16.0 tok/s** deployed (199 tokens / 12.4 s), the low end of the predicted 15–25 band and ~32% below this machine's CPU, as a shared vCPU should be. |
 
 ### The hosting plan changed, and why
 

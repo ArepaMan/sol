@@ -26,6 +26,24 @@ pytestmark = pytest.mark.skipif(
     reason="pipeline artifacts not present — run data/prepare.py, train_tokenizer.py, tokenize.py",
 )
 
+# The module guard above only covers the *small* JSON metadata, which IS
+# committed (see .gitignore's comment on why). The heavy derived corpora are
+# not, so on a fresh clone those files are absent while stats.json and
+# meta.json are present — and the tests that read them failed rather than
+# skipped. Five red tests on `git clone && pytest` reads as a broken project,
+# which is the opposite of what this repo is meant to demonstrate. Caught in
+# M9's final QA by actually cloning the public repo and running the suite.
+_HEAVY_MISSING = "derived corpus not present (gitignored) — run the M1 pipeline; see docs/COMMANDS.md"
+
+requires_jsonl = pytest.mark.skipif(
+    not (PROCESSED_DIR / "train.jsonl").exists() or not (PROCESSED_DIR / "val.jsonl").exists(),
+    reason=_HEAVY_MISSING,
+)
+requires_bin = pytest.mark.skipif(
+    not (TOKENIZED_DIR / "train.bin").exists() or not (TOKENIZED_DIR / "val.bin").exists(),
+    reason=_HEAVY_MISSING,
+)
+
 
 @pytest.fixture(scope="module")
 def stats():
@@ -55,6 +73,7 @@ def test_no_cross_split_leakage(stats):
 
 
 @pytest.mark.slow
+@requires_jsonl
 def test_val_disjoint_from_train_by_hash():
     """Recomputes content hashes from the actual written files — the real
     proof of disjointness, not just trusting the counter prepare.py logged."""
@@ -69,6 +88,7 @@ def test_val_disjoint_from_train_by_hash():
             assert h not in train_hashes
 
 
+@requires_jsonl
 def test_no_duplicate_hashes_within_train():
     seen: set[str] = set()
     with (PROCESSED_DIR / "train.jsonl").open(encoding="utf-8") as f:
@@ -78,6 +98,7 @@ def test_no_duplicate_hashes_within_train():
             seen.add(h)
 
 
+@requires_bin
 def test_token_ids_never_exceed_vocab_size(meta):
     vocab_size = meta["vocab_size"]
     for split in ("train", "val"):
@@ -89,6 +110,8 @@ def test_token_ids_never_exceed_vocab_size(meta):
         assert sample.max() < vocab_size
 
 
+@requires_jsonl
+@requires_bin
 def test_first_document_round_trips_through_the_real_tokenizer(meta):
     tokenizer = Tokenizer.from_file("data/tokenizer/tokenizer.json")
     eot_id = meta["eot_id"]
@@ -103,6 +126,7 @@ def test_first_document_round_trips_through_the_real_tokenizer(meta):
     assert tokenizer.decode(first_doc_ids) == first_text
 
 
+@requires_jsonl
 def test_char_count_kept_matches_actual_written_files(stats):
     """Regression test: char_count_kept was originally accumulated inside
     _clean_split, *before* cross-split leakage removal dropped ~6,300 val

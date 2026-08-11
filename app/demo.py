@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.infer import SolGenerator  # noqa: E402
 
-REPO_ID = os.environ.get("SOL_REPO_ID", "ArepaMan/sol-001")
+REPO_ID = os.environ.get("SOL_REPO_ID", "SpicyGuac/sol-001")
 LOCAL_DIR = os.environ.get("SOL_MODEL_DIR")
 
 BUNDLE_FILES = ("model.pt", "config.yaml", "tokenizer.json", "meta.json")

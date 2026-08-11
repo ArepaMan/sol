@@ -10,7 +10,7 @@ pinned: true
 license: mit
 short_description: A 52M transformer trained from scratch on TinyStories
 models:
-  - ArepaMan/sol-001
+  - SpicyGuac/sol-001
 ---
 
 # Sol
@@ -44,5 +44,5 @@ the app, or [`docs/LIMITATIONS.md`](https://github.com/ArepaMan/sol/blob/master/
   a CPU-only torch wheel, and import-time model loading are all there to keep
   that number down.
 - Weights are **not** in this Space. They live in the model repo
-  [`ArepaMan/sol-001`](https://huggingface.co/ArepaMan/sol-001) and are fetched
+  [`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001) and are fetched
   once via `hf_hub_download`, which caches to disk.

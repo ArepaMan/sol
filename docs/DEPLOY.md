@@ -5,11 +5,17 @@ Sol ships as two Hugging Face repos plus one local export step:
 | Where | What | Why separate |
 |---|---|---|
 | `export/sol-001/` (local) | bf16 weights + tokenizer + config | Built from a 635 MB training checkpoint; git-ignored |
-| HF **model** repo `ArepaMan/sol-001` | the same bundle, 103 MiB | Weights don't belong in a Space repo — Spaces rebuild on every push, and a 100 MB blob in the app repo makes every rebuild re-upload it |
-| HF **Space** `ArepaMan/sol` | `app/` + `src/` only | Fetches the weights at startup with `hf_hub_download`, which caches to disk |
+| HF **model** repo `SpicyGuac/sol-001` | the same bundle, 103 MiB | Weights don't belong in a Space repo — Spaces rebuild on every push, and a 100 MB blob in the app repo makes every rebuild re-upload it |
+| HF **Space** `SpicyGuac/sol` | `app/` + `src/` only | Fetches the weights at startup with `hf_hub_download`, which caches to disk |
 
 The GitHub repo is the source of truth for the code. The Space is a deployment
 target, not a fork.
+
+> **The two namespaces don't match**: GitHub is `ArepaMan`, Hugging Face is
+> `SpicyGuac`. Every `huggingface.co` path below uses `SpicyGuac`; every
+> `github.com` link in `app/demo.py` and `app/README.md` uses `ArepaMan`. Worth
+> stating because a copy-paste between them fails with a 404 that reads like a
+> permissions problem.
 
 ---
 
@@ -64,7 +70,7 @@ huggingface-cli login
 ```
 
 ```bash
-huggingface-cli upload ArepaMan/sol-001 export/sol-001 . --repo-type model
+huggingface-cli upload SpicyGuac/sol-001 export/sol-001 . --repo-type model
 ```
 
 ## 4. Create and push the Space
@@ -76,7 +82,7 @@ huggingface-cli repo create sol --type space --space_sdk gradio
 The Space needs `app/` at its root plus the `src/` package it imports:
 
 ```bash
-git clone https://huggingface.co/spaces/ArepaMan/sol /tmp/sol-space
+git clone https://huggingface.co/spaces/SpicyGuac/sol /tmp/sol-space
 ```
 
 ```bash

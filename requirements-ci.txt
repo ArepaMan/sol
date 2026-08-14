@@ -1,0 +1,38 @@
+# CI dependencies — the third requirements file, and the smallest.
+#
+#   requirements.txt        the *training* environment: CUDA torch, datasets,
+#                           wandb, matplotlib, jupyter. Far too heavy for CI,
+#                           and its CUDA torch wheel is unusable on a GPU-less
+#                           runner.
+#   app/requirements.txt    what the deployed Streamlit demo installs.
+#   requirements-ci.txt     this file: exactly what `pytest -m "not gpu"`,
+#                           `scripts.export_spec --check` and `ruff check`
+#                           import, and nothing else.
+#
+# The `+cpu` local-version tag is load-bearing, not decoration — the same trap
+# that broke the first Streamlit deploy (see docs/DEPLOY.md). With a bare
+# `torch==2.6.0`, pip finds 2.6.0 on PyPI first and installs the ~2.5 GB CUDA
+# build even with the CPU index listed below, because --extra-index-url is
+# additive, not preferential. `+cpu` exists *only* on the PyTorch index, so
+# pinning it is what actually forces the small wheel.
+#
+# Python 3.12 is required, not preferred: torch 2.6.0 ships wheels for 3.9-3.13
+# only, and tests/test_env.py asserts the interpreter is in range.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
+
+# Everything the CPU test subset imports, transitively. Versions match
+# requirements.txt so CI tests the same library versions as the dev machine.
+tokenizers==0.21.0
+numpy==2.2.1
+pyyaml==6.0.2
+tqdm==4.67.1
+
+# tests/test_plot_style.py renders a figure headless (matplotlib.use("Agg")) and
+# opens the PNG with PIL to assert the >=1200px export width. Pillow is not
+# pinned here because it arrives as a matplotlib dependency, same as locally.
+matplotlib==3.10.0
+
+# Dev
+pytest==8.3.4
+ruff==0.8.6

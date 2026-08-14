@@ -1,0 +1,81 @@
+# Sol CI — runs the checks that a fresh clone should pass.
+#
+# This exists because M9's final QA cloned the public repo and found five RED
+# tests: tests/test_pipeline_artifacts.py keyed its skip guard on the *committed*
+# JSON metadata (stats.json, meta.json) while the tests themselves read the
+# *gitignored* .jsonl/.bin corpora. Nothing on this machine could catch that —
+# the corpora are always present here. Only a machine without them can, and
+# until now that machine was "whoever happened to clone the repo manually".
+# See commit 11e16ff. CI is that machine, on every push.
+#
+# The runner has no GPU and no dataset, which is the point: it reproduces the
+# fresh-clone environment exactly. GPU tests are already marked, so `-m "not gpu"`
+# deselects 5 of 134, and the 5 pipeline-artifact tests skip themselves when the
+# corpora are absent. Expected: 124 passed, 5 skipped, 5 deselected.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# A second push supersedes the first — no point burning minutes on a stale SHA.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.12, not "latest": torch 2.6.0 has no wheel for 3.13/3.14, and
+      # tests/test_env.py asserts the interpreter is in range. This is the same
+      # version pin the Streamlit deploy needs — see docs/DEPLOY.md.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      # requirements-ci.txt, not requirements.txt: the latter is the training
+      # environment (CUDA torch, datasets, wandb, jupyter) and installs a
+      # ~2.5 GB CUDA wheel this runner can never use.
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      # Scoped deliberately to the modules that are already clean. There are ~36
+      # pre-existing findings in the M1-M6 files and data/eda.ipynb; fixing them
+      # belongs in its own commit, and a build that is red on day one gets
+      # ignored. Widen this list as modules get cleaned.
+      - name: Lint (clean modules)
+        run: |
+          ruff check \
+            app/ \
+            src/infer.py \
+            scripts/export_spec.py \
+            scripts/export_weights.py \
+            scripts/plot_ablations.py \
+            tests/test_infer.py \
+            tests/test_spec_drift.py
+
+      # The M9 spec-drift guard. docs/spec.json and docs/sol-spec.ts are
+      # generated from the config + eval artifacts, and the portfolio imports the
+      # .ts — so a config edit without a regenerate publishes a stale claim.
+      # Until now this only fired if someone remembered to run it locally.
+      # It instantiates a real GPT to count parameters; that is CPU-only work.
+      - name: Spec drift guard
+        run: python -m scripts.export_spec --check
+
+      - name: Tests (CPU subset)
+        run: pytest -m "not gpu" -q

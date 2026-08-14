@@ -52,6 +52,27 @@ pytest -m "not gpu"         # CPU-only subset (CI, or no GPU attached)
 pytest tests/test_model.py  # M3 architecture tests
 ```
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and PR to `master`. It installs
+`requirements-ci.txt` (CPU torch, not the training environment) on Python 3.12
+and runs three checks, in this order:
+
+```powershell
+ruff check app/ src/infer.py scripts/export_spec.py scripts/export_weights.py scripts/plot_ablations.py tests/test_infer.py tests/test_spec_drift.py
+python -m scripts.export_spec --check
+pytest -m "not gpu" -q
+```
+
+Expected: **124 passed, 5 skipped, 5 deselected**. The 5 deselected are GPU
+tests; the 5 skipped are `tests/test_pipeline_artifacts.py`'s corpus-dependent
+checks, which have no `.jsonl`/`.bin` to read on a runner. That combination —
+no GPU, no dataset — is the whole point: CI is a fresh clone, which is what
+found the five red tests in M9's final QA (commit 11e16ff).
+
+`ruff` is scoped to the modules that are already clean; ~36 pre-existing
+findings in the M1–M6 files and `data/eda.ipynb` are a separate cleanup.
+
 ## Data pipeline (M1)
 
 ```powershell

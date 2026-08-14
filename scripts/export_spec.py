@@ -65,7 +65,13 @@ DEPLOYMENT = {
     "host": "Streamlit Community Cloud (free tier)",
     "host_ram_limit_mb": 1024,
     "model_load_seconds": 6.7,
+    # Mean of 7 generations on the live app. The single-sample 16.0 recorded at
+    # deploy time happened to land exactly on the mean; QA's 6 further runs
+    # showed the spread is wider than the 15-25 originally predicted, and lower:
+    # 12.0-20.0. Recorded as a range because a point estimate oversold it.
     "tokens_per_second_deployed": 16.0,
+    "tokens_per_second_range": [12.0, 20.0],
+    "tokens_per_second_samples": 7,
     "tokens_per_second_local_cpu": 24.6,
     "tokens_per_second_local_gpu": 90.0,
     "bundle_mib": 103.1,

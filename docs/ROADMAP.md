@@ -546,7 +546,7 @@ new capability. That's a scope cut, not an oversight.
 | `--seed 42` twice → byte-identical | ✅ verified. Needed one fix: timing output moved to **stderr**, since wall-clock on stdout can never diff clean. |
 | CPU latency recorded | ✅ **21.6–24.6 tok/s** (fp32, this machine's CPU) vs ~90 tok/s on the 4070 (bf16). Inside the 15–40 tok/s the spec predicted. |
 | Cold start measured | ✅ **6.7 s** to model-ready on the deployed app — well under the 30–60 s predicted. The estimate extrapolated from *local* bandwidth for the 103 MiB pull; the container's network is far faster, which more than offsets its slower CPU. A true wake-from-sleep (12 h idle) is still unmeasured and is called out as such in `docs/DEPLOY.md` rather than papered over with this number. |
-| Public demo generates in incognito | ✅ **<https://sol-52m.streamlit.app>** — verified from a browser session with no cookies or login for the owner's account: streamed token-by-token and stopped itself at 199 tokens on a complete sentence. **16.0 tok/s** deployed (199 tokens / 12.4 s), the low end of the predicted 15–25 band and ~32% below this machine's CPU, as a shared vCPU should be. |
+| Public demo generates in incognito | ✅ **<https://sol-52m.streamlit.app>** — verified from a browser session with no cookies or login for the owner's account: streamed token-by-token and stopped itself at 199 tokens on a complete sentence. Deployed throughput **mean 16.0 tok/s, range 12.0–20.0 (n=7)** — see M9's QA note, which corrected the predicted 15–25 band. |
 
 ### The hosting plan changed, and why
 

@@ -72,7 +72,7 @@ Not a logged-in tab. <https://sol-52m.streamlit.app>
 - [ ] The story **ends by itself** before the token budget, on a complete
       sentence. (If it runs the full 200 and stops mid-word, the EOT-stop
       regressed.)
-- [ ] Throughput caption reads roughly **15–25 tok/s**.
+- [ ] Throughput caption reads roughly **12–20 tok/s** (measured mean 16.0, n=7).
 
 ### 2. Read three stories like a skeptic
 

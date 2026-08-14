@@ -71,8 +71,8 @@ with st.sidebar:
     top_k = st.slider("Top-k (0 = off)", 0, 500, 200, step=10)
     seed = st.number_input("Seed", value=42, step=1)
     st.caption(
-        f"Model loaded in {load_seconds:.1f}s. Generation runs on a free CPU at "
-        "roughly 15-25 tokens/second, so a 200-token story takes ~10-15s."
+        f"Model loaded in {load_seconds:.1f}s. Generation runs on a free shared CPU at "
+        "roughly 12-20 tokens/second, so a 200-token story takes ~10-17s."
     )
     st.divider()
     st.markdown(f"[Source on GitHub]({GITHUB})")

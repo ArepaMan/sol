@@ -117,7 +117,7 @@ with gr.Blocks(title="Sol — a 52M-parameter story model", css=CSS) as demo:
                     gr.Markdown(
                         "This Space runs on a free CPU and sleeps when idle — **the first "
                         "request after a nap can take ~60 s** while the model loads. "
-                        "After that, generation streams at roughly 15–25 tokens/second.",
+                        "After that, generation streams at roughly 12–20 tokens/second.",
                         elem_classes="sol-note",
                     )
                 with gr.Column(scale=1):

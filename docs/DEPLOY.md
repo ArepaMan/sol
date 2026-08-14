@@ -246,13 +246,21 @@ Measured with `python -m src.infer --model-dir export/sol-001 --device cpu
 |---|---|
 | RTX 4070 Laptop (bf16) | ~90 tok/s |
 | This machine's CPU (fp32) | 21.6–24.6 tok/s |
-| **Community Cloud, deployed (fp32)** | **16.0 tok/s** — 199 tokens in 12.4 s |
+| **Community Cloud, deployed (fp32)** | **mean 16.0 tok/s, range 12.0–20.0** (n=7) |
 
-The deployed rate landed at the bottom of the predicted 15–25 tok/s band, about
-32% below this machine's CPU — a shared vCPU, as expected. A 200-token story
-takes ~12 s, which is exactly why the app streams token-by-token instead of
-returning one block at the end: 12 s of nothing reads as broken, 12 s of text
-arriving reads as thinking.
+**The originally predicted 15–25 tok/s band was wrong, and QA caught it.** The
+single measurement taken at deploy time was 16.0 tok/s, which sat inside that
+band and looked like confirmation. Six further generations during manual QA came
+in at 12.0, 14.2, 17.8, 20.0, 15.1 and 16.9 — two below the predicted floor,
+none within 5 tok/s of the predicted ceiling. The mean across all seven is
+exactly 16.0, so the point estimate was fine and the *band* was fiction: a
+single sample cannot tell you a range, and quoting one as if it could is the
+error worth naming.
+
+A shared vCPU also has no throughput guarantee — that spread is partly other
+tenants, not just variance in story length. A 200-token story takes 10–17 s,
+which is exactly why the app streams token-by-token instead of returning one
+block: 15 s of nothing reads as broken, 15 s of arriving text reads as thinking.
 
 `src/infer.py` uses fp32 on CPU deliberately (`resolve_dtype`): CPU bf16 runs
 through reference kernels on most x86 parts and is slower than fp32, and since

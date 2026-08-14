@@ -103,6 +103,11 @@ export const solSpec = {
       "host_ram_limit_mb": 1024,
       "model_load_seconds": 6.7,
       "tokens_per_second_deployed": 16.0,
+      "tokens_per_second_range": [
+        12.0,
+        20.0,
+      ],
+      "tokens_per_second_samples": 7,
       "tokens_per_second_local_cpu": 24.6,
       "tokens_per_second_local_gpu": 90.0,
       "bundle_mib": 103.1,

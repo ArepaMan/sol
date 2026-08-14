@@ -83,12 +83,18 @@ was measured, not just asserted, and points at the artifact that backs it.
 ## Deployment (M8 findings — `docs/DEPLOY.md`, `app/`)
 
 - **CPU inference is ~5.6× slower than the GPU, and that is the demo's real
-  speed.** Measured on the deployed app (<https://sol-52m.streamlit.app>):
-  **16.0 tok/s**, 199 tokens in 12.4 s. Locally: 21.6–24.6 tok/s on this
-  machine's CPU (fp32) and ~90 tok/s on the RTX 4070 (bf16). A 200-token story
-  is a ~12 second wait, which is why the demo streams rather than returning one
-  block — 12 s of nothing reads as broken, 12 s of arriving text reads as
-  thinking.
+  speed.** Measured on the deployed app (<https://sol-52m.streamlit.app>) over
+  7 generations: **mean 16.0 tok/s, range 12.0–20.0**. Locally: 21.6–24.6 tok/s
+  on this machine's CPU (fp32) and ~90 tok/s on the RTX 4070 (bf16). A
+  200-token story is a 10–17 second wait, which is why the demo streams rather
+  than returning one block.
+- **A predicted throughput band was published on the strength of one sample.**
+  The deploy-time measurement was 16.0 tok/s against a predicted 15–25, which
+  looked like confirmation. Manual QA's six further runs landed 12.0–20.0 — two
+  below the predicted floor, none near the ceiling. The mean was still exactly
+  16.0, so the point estimate held and the *range* was invented. Fixed in the
+  docs and in the app's own caption. Noted here because it is the same class of
+  error the project criticises elsewhere: quoting a spread you did not measure.
 - **Sampling is reproducible per device, not across devices.** `--seed 42`
   twice on the same device is byte-identical (an M8 exit criterion; timing
   output goes to stderr so the diff is clean). CUDA seed 42 and CPU seed 42

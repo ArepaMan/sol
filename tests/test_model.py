@@ -187,6 +187,174 @@ def test_sequence_longer_than_block_size_raises(tiny_config):
         model(idx)
 
 
+# ---------------------------------------------------------------------------
+# KV cache
+#
+# The cache is a pure speed change: it must not move a single logit. These are
+# the causality test's twins — the causality test says future tokens can't
+# reach backwards, and these say a token's logits don't depend on whether the
+# past arrived all at once or one token at a time.
+# ---------------------------------------------------------------------------
+
+def test_incremental_forward_with_cache_matches_a_full_forward(tiny_config):
+    """The cache's actual contract, checked on logits rather than through
+    sampling: feeding a sequence one token at a time through the cache must
+    give the same logits as one forward pass over the whole sequence."""
+    model = GPT(tiny_config)
+    model.eval()
+
+    B, T = 2, 12
+    idx = torch.randint(0, tiny_config.vocab_size, (B, T))
+
+    with torch.no_grad():
+        full, _ = model(idx)
+        cache = model.new_kv_cache()
+        stepwise = torch.cat(
+            [model(idx[:, t : t + 1], cache=cache)[0] for t in range(T)], dim=1
+        )
+
+    assert cache.length == T
+    assert stepwise.shape == full.shape
+    assert torch.allclose(stepwise, full, atol=1e-5)
+
+
+def test_prefill_then_decode_matches_a_full_forward(tiny_config):
+    """The shape generation actually uses: one multi-token prefill, then
+    single-token steps. Exercises the T>1 and T==1 branches in one pass."""
+    model = GPT(tiny_config)
+    model.eval()
+
+    T, split = 12, 7
+    idx = torch.randint(0, tiny_config.vocab_size, (1, T))
+
+    with torch.no_grad():
+        full, _ = model(idx)
+        cache = model.new_kv_cache()
+        prefill, _ = model(idx[:, :split], cache=cache)
+        decoded = torch.cat(
+            [model(idx[:, t : t + 1], cache=cache)[0] for t in range(split, T)], dim=1
+        )
+
+    assert torch.allclose(torch.cat([prefill, decoded], dim=1), full, atol=1e-5)
+
+
+def test_cache_makes_each_decode_step_a_single_token(tiny_config):
+    """Guards against a cache that is threaded through but never populated —
+    that would pass every equivalence test above and still be O(n^2). The
+    widths *are* the optimisation: [prompt, 1, 1, ...] instead of a prefix
+    that grows by one every step."""
+    model = GPT(tiny_config)
+    model.eval()
+    idx = torch.randint(0, tiny_config.vocab_size, (1, 4))
+
+    widths: list[int] = []
+    inner = model.forward
+
+    def spy(idx_in, targets=None, cache=None):
+        widths.append(idx_in.size(1))
+        return inner(idx_in, targets, cache=cache)
+
+    model.forward = spy
+
+    model.generate(idx.clone(), max_new_tokens=5, top_k=1)
+    assert widths == [4, 1, 1, 1, 1]
+
+    widths.clear()
+    model.generate(idx.clone(), max_new_tokens=5, top_k=1, use_cache=False)
+    assert widths == [4, 5, 6, 7, 8]
+
+
+def test_cache_rebuilds_when_the_context_window_slides(tiny_config):
+    """Past `block_size` the window slides, which shifts every token's learned
+    positional embedding by one — so every cached key/value is stale and the
+    cache has to be rebuilt from the window. That is why generation past
+    block_size is no faster than it was; see docs/LIMITATIONS.md."""
+    model = GPT(tiny_config)
+    model.eval()
+    block = tiny_config.block_size
+    idx = torch.randint(0, tiny_config.vocab_size, (1, block - 2))
+
+    widths: list[int] = []
+    inner = model.forward
+
+    def spy(idx_in, targets=None, cache=None):
+        widths.append(idx_in.size(1))
+        return inner(idx_in, targets, cache=cache)
+
+    model.forward = spy
+    model.generate(idx, max_new_tokens=5, top_k=1)
+
+    # Prefill, two cheap steps, then full re-prefills once the window slides.
+    assert widths == [block - 2, 1, 1, block, block]
+
+
+def test_cached_and_uncached_generate_agree_past_block_size(tiny_config):
+    """top_k=1 makes sampling a deterministic argmax, so this compares the
+    token sequences directly rather than trusting a shared RNG stream — and
+    it runs long enough to cross block_size and exercise the rebuild path."""
+    model = GPT(tiny_config)
+    model.eval()
+    idx = torch.randint(0, tiny_config.vocab_size, (1, tiny_config.block_size - 2))
+
+    cached = model.generate(idx.clone(), max_new_tokens=8, top_k=1, use_cache=True)
+    uncached = model.generate(idx.clone(), max_new_tokens=8, top_k=1, use_cache=False)
+
+    assert torch.equal(cached, uncached)
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "dtype, tolerance", [(torch.float32, 1e-4), (torch.bfloat16, 5e-2)]
+)
+def test_cache_agrees_with_a_full_forward_on_cuda(model_config, dtype, tolerance):
+    """bf16 is where byte-identity stops being available, and that is worth
+    pinning down rather than discovering later.
+
+    A cached decode step reduces over the key dimension in a different order
+    than a full-width forward does. The two tolerances here are the whole
+    point, and they are measured on the real 52M config:
+
+    * **fp32** — difference ~2e-6 of logit scale. Sampling never notices, and
+      cached and uncached generation come out byte-identical (which is what
+      the deployed CPU path relies on, and what tests/test_infer.py asserts).
+    * **bf16** — 8 mantissa bits accumulated over 8 layers puts the difference
+      at ~1e-2 of logit scale. That is enough for a multinomial draw against a
+      slightly shifted CDF to eventually pick a different token, after which
+      the story diverges. Same story, different roll of the dice; not a
+      regression, and not something the cache can fix.
+
+    Both bounds are on *rounding*. A masking or positioning bug in the cache
+    would move logits by order 1, not by 1%, and would fail both arms.
+    """
+    device = torch.device("cuda")
+    model = GPT(model_config, gradient_checkpointing=False)
+    model.to(device=device, dtype=dtype).eval()
+
+    T = 64
+    idx = torch.randint(0, model_config.vocab_size, (1, T), device=device)
+    with torch.no_grad():
+        full, _ = model(idx)
+        cache = model.new_kv_cache()
+        stepwise = torch.cat(
+            [model(idx[:, t : t + 1], cache=cache)[0] for t in range(T)], dim=1
+        )
+
+    full, stepwise = full.float(), stepwise.float()
+    relative = ((full - stepwise).abs().max() / full.abs().max()).item()
+    assert relative < tolerance, f"{dtype} drifted {relative:.2e} of logit scale"
+
+
+def test_cache_overflowing_block_size_raises(tiny_config):
+    """The bound is on cached-plus-new tokens, not on the width of one call —
+    a single-token forward against a full cache is still over budget."""
+    model = GPT(tiny_config)
+    cache = model.new_kv_cache()
+    idx = torch.randint(0, tiny_config.vocab_size, (1, tiny_config.block_size))
+    model(idx, cache=cache)
+    with pytest.raises(ValueError, match="block_size"):
+        model(idx[:, :1], cache=cache)
+
+
 @pytest.mark.gpu
 def test_full_model_forward_backward_on_cuda_bf16(model_config):
     """The real ~53M-param model, on the actual target hardware, in the

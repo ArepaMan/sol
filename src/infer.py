@@ -154,11 +154,18 @@ class SolGenerator:
         top_k: int | None = 200,
         seed: int | None = None,
         stop_at_eot: bool = True,
+        use_cache: bool = True,
     ) -> Iterator[str]:
         """Yield the completion incrementally, one decoded delta per token.
 
         Yields *only the completion*, not the prompt. The final yielded text
         concatenated with the prompt is what `generate()` returns.
+
+        `use_cache=False` falls back to re-running the whole prefix per token.
+        Keeping that path alive is what makes the cache safe to trust: the
+        equivalence tests in `tests/test_infer.py` need something to compare
+        against, and "the old code still exists and still agrees" is a much
+        stronger claim than "the new code looks right".
         """
         if seed is not None:
             set_seed(seed)
@@ -170,12 +177,19 @@ class SolGenerator:
             prompt_ids = prompt_ids[-(self.block_size - 1) :]
 
         idx = torch.tensor([prompt_ids], dtype=torch.long, device=self.device)
+        cache = self.model.new_kv_cache() if use_cache else None
         generated: list[int] = []
         emitted = ""
 
         for _ in range(max_new_tokens):
-            idx_cond = idx if idx.size(1) <= self.block_size else idx[:, -self.block_size :]
-            logits, _ = self.model(idx_cond)
+            # With a cache this is the prompt once and then a single token per
+            # step; without one it is the whole growing prefix, every step.
+            # The window-slide rule lives in KVCache.next_input so the two
+            # loops in this project can't disagree about it.
+            idx_cond = (
+                cache.next_input(idx) if cache is not None else idx[:, -self.block_size :]
+            )
+            logits, _ = self.model(idx_cond, cache=cache)
             logits = logits[:, -1, :].float() / temperature
 
             if top_k is not None:
@@ -208,6 +222,7 @@ class SolGenerator:
         top_k: int | None = 200,
         seed: int | None = None,
         stop_at_eot: bool = True,
+        use_cache: bool = True,
     ) -> str:
         """Full completion, prompt included. Same sampling path as `stream`."""
         parts = list(
@@ -218,6 +233,7 @@ class SolGenerator:
                 top_k=top_k,
                 seed=seed,
                 stop_at_eot=stop_at_eot,
+                use_cache=use_cache,
             )
         )
         return prompt + "".join(parts)
@@ -240,6 +256,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default=None, choices=[None, "cpu", "cuda"])
     parser.add_argument("--stream", action="store_true", help="print tokens as they are sampled")
     parser.add_argument("--no-stop-at-eot", action="store_true", help="run the full token budget")
+    parser.add_argument(
+        "--no-kv-cache",
+        action="store_true",
+        help="recompute the whole prefix every token (the pre-cache O(n^2) path). "
+        "Same output, byte for byte — this flag exists so the speedup can be "
+        "measured on demand rather than taken on faith.",
+    )
     parser.add_argument("--n", type=int, default=1, help="number of samples")
     return parser
 
@@ -275,6 +298,7 @@ def main(argv: list[str] | None = None) -> None:
                 top_k=args.top_k,
                 seed=seed,
                 stop_at_eot=not args.no_stop_at_eot,
+                use_cache=not args.no_kv_cache,
             ):
                 print(chunk, end="", flush=True)
                 chunks.append(chunk)
@@ -290,6 +314,7 @@ def main(argv: list[str] | None = None) -> None:
                 top_k=args.top_k,
                 seed=seed,
                 stop_at_eot=not args.no_stop_at_eot,
+                use_cache=not args.no_kv_cache,
             )
             print(text)
             n_tokens = len(gen.tokenizer.encode(text).ids) - len(gen.tokenizer.encode(args.prompt).ids)

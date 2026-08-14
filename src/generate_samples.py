@@ -62,7 +62,17 @@ def generate_one(
 ) -> str:
     ids = tokenizer.encode(prompt).ids
     idx = torch.tensor([ids], dtype=torch.long, device=device)
-    out = model.generate(idx, max_new_tokens=max_new_tokens, temperature=temperature, top_k=top_k)
+    # use_cache=False on purpose. This script produced M6's published artifacts
+    # (eval/generations.jsonl, and the rubric scores that cite generations by
+    # id), so it has to keep reproducing them from committed code. The KV cache
+    # is byte-identical here in practice — measured 10/10 identical over 1,500
+    # sampled tokens at this script's CUDA fp32 — but "in practice" is the wrong
+    # guarantee for a script whose output other documents cite by index, and the
+    # cache buys only ~6% on GPU anyway. Same reasoning as M8's decision to
+    # leave this file out of the EOT-stop fix; see docs/LIMITATIONS.md.
+    out = model.generate(
+        idx, max_new_tokens=max_new_tokens, temperature=temperature, top_k=top_k, use_cache=False
+    )
     return tokenizer.decode(out[0].tolist())
 
 

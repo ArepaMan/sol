@@ -110,10 +110,16 @@ def test_generation_stops_at_eot(tokenizer: Tokenizer):
         tied to the embedding table, so nudging a row changes both sides of the
         dot product and the sampled token stays anyone's guess."""
 
-        def __call__(self, idx):
+        def __call__(self, idx, cache=None):
             logits = torch.full((idx.size(0), idx.size(1), 32000), -1e9)
             logits[:, :, eot_id] = 0.0
             return logits, None
+
+        def new_kv_cache(self):
+            # This stub ignores its input entirely — there is no attention and
+            # so nothing to cache. Returning None puts SolGenerator on the
+            # uncached path, which is the honest answer for a model like this.
+            return None
 
     gen = SolGenerator(AlwaysEOT(), tokenizer, torch.device("cpu"), eot_id, 64)
     out = gen.generate("Once upon a time", max_new_tokens=50, seed=42)
@@ -133,3 +139,109 @@ def test_overlong_prompt_is_truncated_to_context(tiny_generator: SolGenerator):
 def test_top_k_none_is_accepted(tiny_generator: SolGenerator):
     out = tiny_generator.generate("Once upon a time", max_new_tokens=4, top_k=None, seed=42)
     assert out.startswith("Once upon a time")
+
+
+# ---------------------------------------------------------------------------
+# KV cache
+#
+# The whole safety argument for the cache is one property: with the same seed
+# and the same sampling parameters, cached and uncached generation produce
+# *byte-identical* text. It is a total property — one flipped token diverges
+# everything after it, so equality across prompts, seeds and lengths is very
+# hard to pass by accident. See tests/test_model.py for the logit-level twins.
+# ---------------------------------------------------------------------------
+
+CACHE_EQUIVALENCE_CASES = [
+    # (prompt, max_new_tokens, seed)
+    ("Once upon a time", 24, 42),
+    ("Once upon a time", 24, 43),
+    ("The little dragon sat down and", 40, 7),
+    ("A", 60, 1234),          # single-token prompt: prefill of width 1
+    ("Lily and Tom went to the park to play with", 8, 99),
+]
+
+
+@pytest.mark.parametrize("prompt, max_new_tokens, seed", CACHE_EQUIVALENCE_CASES)
+def test_cached_generation_is_byte_identical(
+    tiny_generator: SolGenerator, prompt: str, max_new_tokens: int, seed: int
+):
+    cached = tiny_generator.generate(
+        prompt, max_new_tokens=max_new_tokens, seed=seed, use_cache=True
+    )
+    uncached = tiny_generator.generate(
+        prompt, max_new_tokens=max_new_tokens, seed=seed, use_cache=False
+    )
+    assert cached == uncached
+
+
+def test_cached_generation_is_byte_identical_past_the_context_window(
+    tiny_generator: SolGenerator,
+):
+    """Generation that runs past `block_size` slides the context window, and
+    sliding it shifts every token's learned positional embedding — so every
+    cached key/value goes stale at once. This is the case a naive cache gets
+    silently, plausibly wrong."""
+    prompt = "Once upon a time"
+    prompt_len = len(tiny_generator.tokenizer.encode(prompt).ids)
+    max_new_tokens = tiny_generator.block_size + 16 - prompt_len
+    assert prompt_len + max_new_tokens > tiny_generator.block_size  # not vacuous
+
+    # stop_at_eot=False so the full budget is always spent: an early stop would
+    # leave this passing without ever reaching the window slide.
+    kwargs = dict(max_new_tokens=max_new_tokens, seed=42, stop_at_eot=False)
+    cached = tiny_generator.generate(prompt, **kwargs)
+    uncached = tiny_generator.generate(prompt, use_cache=False, **kwargs)
+    assert cached == uncached
+
+
+def test_cached_generation_is_byte_identical_for_an_overlong_prompt(
+    tiny_generator: SolGenerator,
+):
+    """The other half of the truncation path: a prompt that is already longer
+    than the context window, so the very first step is a tail-truncated
+    prefill and the window slides from the second token onward."""
+    prompt = "the little cat ran " * 40
+    assert (
+        len(tiny_generator.tokenizer.encode(prompt).ids) >= tiny_generator.block_size
+    )  # not vacuous
+
+    cached = tiny_generator.generate(prompt, max_new_tokens=12, seed=42)
+    uncached = tiny_generator.generate(
+        prompt, max_new_tokens=12, seed=42, use_cache=False
+    )
+    assert cached == uncached
+
+
+def test_streamed_deltas_are_identical_with_and_without_the_cache(
+    tiny_generator: SolGenerator,
+):
+    """Not just the final text: the *chunking* has to match too, since that is
+    what the demos render token by token."""
+    cached = list(tiny_generator.stream("Once upon a time", max_new_tokens=20, seed=42))
+    uncached = list(
+        tiny_generator.stream(
+            "Once upon a time", max_new_tokens=20, seed=42, use_cache=False
+        )
+    )
+    assert cached == uncached
+
+
+def test_cache_is_on_by_default(tiny_generator: SolGenerator):
+    """The point of all the equivalence tests above is that the fast path can
+    be the default. If this ever flips, the speedup silently stops shipping."""
+    widths: list[int] = []
+    inner = tiny_generator.model.forward
+
+    def spy(idx, targets=None, cache=None):
+        widths.append(idx.size(1))
+        return inner(idx, targets, cache=cache)
+
+    tiny_generator.model.forward = spy
+    try:
+        tiny_generator.generate(
+            "Once upon a time", max_new_tokens=5, seed=42, stop_at_eot=False
+        )
+    finally:
+        tiny_generator.model.forward = inner
+
+    assert widths[1:] == [1, 1, 1, 1]  # prefill, then one token per step

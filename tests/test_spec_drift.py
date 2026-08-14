@@ -109,8 +109,17 @@ def test_kv_cache_speedups_carry_a_real_range(spec: dict):
     and a mean that falls inside it — so a future edit can't quietly publish a
     point estimate dressed up as a spread."""
     kv = spec["kv_cache"]
-    assert kv["samples_per_cell"] >= 5
-    for cell in ("cpu_before", "cpu_after", "gpu_before", "gpu_after"):
+    local_n = kv["samples_per_cell"]
+    cells = [
+        ("cpu_before", local_n),
+        ("cpu_after", local_n),
+        ("gpu_before", local_n),
+        ("gpu_after", local_n),
+        ("deployed_before", kv["deployed_before_samples"]),
+        ("deployed_after", kv["deployed_after_samples"]),
+    ]
+    for cell, n in cells:
+        assert n >= 5, f"{cell}: n={n} is too few to quote a range"
         lo, hi = kv[f"{cell}_range"]
         assert lo < hi, f"{cell}: a single sample cannot establish a range"
         assert lo <= kv[cell] <= hi, f"{cell}: mean {kv[cell]} sits outside {lo}-{hi}"
@@ -122,6 +131,21 @@ def test_kv_cache_deployed_figure_is_the_cpu_one(spec: dict):
     headline number from the wrong row of the table."""
     assert spec["deployment"]["tokens_per_second_local_cpu"] == spec["kv_cache"]["cpu_after"]
     assert spec["deployment"]["tokens_per_second_local_gpu"] == spec["kv_cache"]["gpu_after"]
+    # The live figure and the KV-cache table's deployed cell are the same
+    # measurement; they must not drift into two different published numbers.
+    assert spec["deployment"]["tokens_per_second_deployed"] == spec["kv_cache"]["deployed_after"]
+
+
+def test_deployed_speedup_is_flagged_as_not_a_controlled_comparison(spec: dict):
+    """The deployed before/after spans two sessions on a shared host — the app
+    has no `--no-kv-cache` switch to interleave against, unlike the two local
+    rows. That weakness rides along with the number in the spec itself, so
+    anyone consuming the 1.8× downstream gets the caveat and not just the
+    ratio."""
+    kv = spec["kv_cache"]
+    assert kv["deployed_before_is_same_session_control"] is False
+    # The claim that survives the caveat: the two ranges don't overlap.
+    assert kv["deployed_after_range"][0] > kv["deployed_before_range"][1]
 
 
 def test_max_train_tokens_matches_the_measured_corpus(spec: dict):

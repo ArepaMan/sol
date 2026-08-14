@@ -72,7 +72,7 @@ with st.sidebar:
     seed = st.number_input("Seed", value=42, step=1)
     st.caption(
         f"Model loaded in {load_seconds:.1f}s. Generation runs on a free shared CPU at "
-        "roughly 12-20 tokens/second, so a 200-token story takes ~10-17s."
+        "roughly 26-30 tokens/second, so a 200-token story takes ~7s."
     )
     st.divider()
     st.markdown(f"[Source on GitHub]({GITHUB})")

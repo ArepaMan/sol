@@ -21,8 +21,9 @@ at 379.0 (`eval/results.md`). `src/model.py` measures at **52,901,712 params**.
 Ablations (M7): learning rate has by far the largest effect (20–200× seed-to-seed
 noise); data scale (100M vs full corpus) matters, but only narrowly
 (`experiments/002_lr_sweep/`, `experiments/003_data_scale/`,
-`experiments/004_seed_variance/`). The demo runs at **16.0 tok/s** on a free shared
-vCPU, loading in 6.7 s — see [`docs/DEPLOY.md`](docs/DEPLOY.md).
+`experiments/004_seed_variance/`). The demo runs at **29.0 tok/s** on a free shared
+vCPU (range 26.2–30.0, n=5), loading in 6.7 s — up from 16.0 before the post-M9 KV
+cache — see [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 > **A note on hosting, because it changed the plan.** M8 targeted a free Hugging Face
 > Space. Hugging Face has since moved Gradio Spaces behind a PRO subscription

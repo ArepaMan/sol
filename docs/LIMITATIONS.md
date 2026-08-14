@@ -82,12 +82,15 @@ was measured, not just asserted, and points at the artifact that backs it.
 
 ## Deployment (M8 findings — `docs/DEPLOY.md`, `app/`)
 
-- **CPU inference is ~5.6× slower than the GPU, and that is the demo's real
-  speed.** Measured on the deployed app (<https://sol-52m.streamlit.app>) over
-  7 generations: **mean 16.0 tok/s, range 12.0–20.0**. Locally: 21.6–24.6 tok/s
-  on this machine's CPU (fp32) and ~90 tok/s on the RTX 4070 (bf16). A
-  200-token story is a 10–17 second wait, which is why the demo streams rather
-  than returning one block.
+- **CPU inference is slower than the GPU, and that is the demo's real speed.**
+  Measured on the deployed app (<https://sol-52m.streamlit.app>) over 7
+  generations: **mean 16.0 tok/s, range 12.0–20.0** — a 10–17 second wait for a
+  200-token story, which is why the demo streams rather than returning one
+  block. **Superseded post-M9 by the KV cache: mean 29.0, range 26.2–30.0
+  (n=5), so ~7 s.** The original finding stays because the streaming decision
+  was made against it and still holds — 7 s of nothing would still read as
+  broken. See the inference-optimisation section below for why the deployed
+  gain (1.8×) is only half the local one (3.5×).
 - **A predicted throughput band was published on the strength of one sample.**
   The deploy-time measurement was 16.0 tok/s against a predicted 15–25, which
   looked like confirmation. Manual QA's six further runs landed 12.0–20.0 — two
@@ -143,6 +146,21 @@ was measured, not just asserted, and points at the artifact that backs it.
   tokens from a short prompt never enters this regime, which is why the cache
   is still worth having; but the speedup is conditional and the condition is
   worth saying out loud.
+- **The deployed before/after is not a controlled comparison, unlike the local
+  one.** Locally the cached and uncached arms were interleaved in one session,
+  so drift hit both. The deployed app exposes no `--no-kv-cache` switch, so its
+  "before" is the *historical* 16.0 from M8/M9 QA — a different session, on a
+  shared host, with different neighbours. The measured **1.8× (16.0 → 29.0)**
+  therefore carries two sessions' worth of noise. What survives the caveat is
+  that the ranges do not overlap at all (new low 26.2 > old high 20.0), and
+  that the new spread is much tighter (3.8 tok/s wide vs 8.0). Recorded in
+  `docs/spec.json` as `deployed_before_is_same_session_control: false`, so the
+  caveat travels with the number instead of living only in this document.
+- **The deployed gain is half the local one, and the local number is the one
+  that flatters.** 1.8× deployed against 3.5× on this machine — a free shared
+  vCPU has fewer cores and less memory bandwidth, so there is less to win by
+  removing redundant arithmetic. Quoting the 3.5× as "the speedup" would be
+  quoting the number measured on hardware no user touches.
 - **The GPU speedup is 1.06×, not the ~4× the FLOP argument predicts.** At
   batch 1 with a 52M-parameter model, generation on the 4070 is bound by
   kernel-launch and Python-loop overhead, not arithmetic: 132 tok/s is ~7.5 ms

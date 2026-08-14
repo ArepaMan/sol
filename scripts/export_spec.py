@@ -65,13 +65,14 @@ DEPLOYMENT = {
     "host": "Streamlit Community Cloud (free tier)",
     "host_ram_limit_mb": 1024,
     "model_load_seconds": 6.7,
-    # Mean of 7 generations on the live app. The single-sample 16.0 recorded at
-    # deploy time happened to land exactly on the mean; QA's 6 further runs
-    # showed the spread is wider than the 15-25 originally predicted, and lower:
-    # 12.0-20.0. Recorded as a range because a point estimate oversold it.
-    "tokens_per_second_deployed": 16.0,
-    "tokens_per_second_range": [12.0, 20.0],
-    "tokens_per_second_samples": 7,
+    # Mean of 5 generations on the live app after the post-M9 KV cache landed
+    # (seeds 42-46, defaults, one warm-up generation discarded). Supersedes the
+    # pre-cache 16.0 / 12.0-20.0 over n=7, which is kept in KV_CACHE below as
+    # the "before" column rather than deleted. Recorded as a range because a
+    # point estimate oversold it last time.
+    "tokens_per_second_deployed": 29.0,
+    "tokens_per_second_range": [26.2, 30.0],
+    "tokens_per_second_samples": 5,
     "tokens_per_second_local_cpu": 82.8,
     "tokens_per_second_local_gpu": 132.4,
     "bundle_mib": 103.1,
@@ -94,6 +95,19 @@ KV_CACHE = {
     "gpu_after": 132.4,
     "gpu_after_range": [130.5, 133.2],
     "samples_per_cell": 7,
+    # The deployed pair is the weakest of the three and is flagged as such. The
+    # app exposes no --no-kv-cache switch, so "before" is the *historical*
+    # M8/M9 QA measurement from a different session on a shared host, not an
+    # interleaved control like the two local rows. The ranges do not overlap
+    # (26.2 > 20.0), so the gain survives that noise -- but the 1.8x should not
+    # be quoted with the confidence of the local 3.5x.
+    "deployed_before": 16.0,
+    "deployed_before_range": [12.0, 20.0],
+    "deployed_before_samples": 7,
+    "deployed_after": 29.0,
+    "deployed_after_range": [26.2, 30.0],
+    "deployed_after_samples": 5,
+    "deployed_before_is_same_session_control": False,
     # Past block_size a sliding window shifts every learned absolute position,
     # invalidating the whole cache -- so it buys nothing there. Measured, not
     # reasoned: 661-token prompt, every step in the slide regime.

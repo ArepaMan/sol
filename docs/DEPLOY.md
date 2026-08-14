@@ -248,15 +248,49 @@ Measured with `python -m src.infer --model-dir export/sol-001 --device {cpu,cuda
 |---|---|---|---|
 | This machine's CPU (fp32) | 23.4 tok/s (22.7–24.6) | **82.8 tok/s (74.9–88.0)** | **3.5×** |
 | RTX 4070 Laptop (bf16) | 124.4 tok/s (123.2–125.7) | **132.4 tok/s (130.5–133.2)** | **1.06×** |
-| **Community Cloud, deployed (fp32)** | mean 16.0, range 12.0–20.0 (n=7) | *see below* | |
+| **Community Cloud, deployed (fp32)** | mean 16.0, range 12.0–20.0 (n=7) | **mean 29.0, range 26.2–30.0** (n=5) | **1.8×** |
+
+### The deployed gain is 1.8×, not the local 3.5×
+
+Measured through the app's own per-generation caption, seeds 42–46 at the default
+sampling settings, after discarding one warm-up generation:
+
+| Seed | Tokens | Seconds | tok/s |
+|---|---|---|---|
+| 42 | 199 | 7.6 | 26.2 |
+| 43 | 200 | 6.8 | 29.4 |
+| 44 | 156 | 5.3 | 29.6 |
+| 45 | 152 | 5.1 | 30.0 |
+| 46 | 200 | 6.7 | 29.8 |
+
+**This comparison is weaker than the local one, and the reason matters.** Locally
+the two arms were interleaved in a single session, so drift hit both equally. The
+deployed app exposes no `--no-kv-cache` switch, so its "before" column is the
+*historical* 16.0 from M8/M9 QA — a different session, on a shared host, with
+different neighbours. The 1.8× therefore carries the noise of two measurement
+sessions rather than one controlled experiment. It is the honest number
+available, not a clean speedup, and it should not be quoted with the same
+confidence as the local 3.5×.
+
+Two things survive that caveat. The gain is large enough that the ranges do not
+overlap at all — the new low (26.2) sits above the old high (20.0). And the new
+spread is **much tighter**: 3.8 tok/s wide against the old 8.0. Four of the five
+samples land in 29.4–30.0; only seed 42, the first recorded generation, sits low
+at 26.2, which looks like container warm-up surviving the discarded run. A faster
+generation simply gives a noisy shared vCPU less wall-clock in which to interfere.
+
+Why 1.8× and not 3.5×: the deployed host is a shared vCPU, not this machine's
+CPU. Fewer cores and less memory bandwidth for the same arithmetic means less to
+win by removing redundant work. The deployed figure is what users actually get,
+so it is the one the app's caption quotes.
 
 **The GPU barely moved, and that is the informative half.** At batch 1 with a
 52M-parameter model, generation on a 4070 is bound by kernel-launch and
 Python-loop overhead, not by arithmetic — 132 tok/s is ~7.5 ms per token across
 8 layers, which is nowhere near what that GPU can compute in 7.5 ms. Deleting
 redundant FLOPs from something that was never FLOP-bound buys 6%. The CPU is
-genuinely compute-bound, so it gets 3.5× — and the CPU is what the deployed app
-runs on, so the 3.5× is the number that reaches users.
+genuinely compute-bound, so it gets 3.5× locally and 1.8× deployed — and CPU is
+what the deployed app runs on, so that is the number that reaches users.
 
 **A first pass measured the GPU at 1.12×.** Alternating the two arms instead of
 running all of one then all of the other dropped it to 1.06× and tightened both

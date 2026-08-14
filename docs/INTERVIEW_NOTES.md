@@ -111,7 +111,7 @@ a punishing cut. Anyone can report the ablation that worked.
 ## 7. Reproducibility
 
 **Artifact:** `scripts/export_spec.py`, `tests/test_spec_drift.py`, `docs/COMMANDS.md`
-**Number:** **151 tests**; `python -m src.infer --seed 42` twice → byte-identical.
+**Number:** **154 tests**; `python -m src.infer --seed 42` twice → byte-identical.
 
 YAML is the single source of truth; nothing downstream hardcodes a
 hyperparameter. Determinism is per-device and stated as such — CUDA seed 42 and
@@ -169,8 +169,9 @@ re-measurement.
 ## 10. Inference optimisation
 
 **Artifact:** `src/model.py` (`KVCache`), `tests/test_infer.py`, `docs/DEPLOY.md`
-**Number:** CPU **23.4 → 82.8 tok/s (3.5×)**, n=7 interleaved; GPU **124.4 →
-132.4 (1.06×)**; peak RSS unchanged.
+**Number:** deployed **16.0 → 29.0 tok/s (1.8×)**, n=5 — the number users
+actually get. Locally CPU **23.4 → 82.8 (3.5×)** and GPU **124.4 → 132.4
+(1.06×)**, n=7 interleaved; peak RSS unchanged.
 
 Generation re-ran the whole growing prefix through all 8 layers for every
 token — O(n²) to produce n tokens, and every recomputation provably redundant
@@ -190,9 +191,18 @@ model, generation on a 4070 is bound by kernel-launch and Python-loop overhead
 — 132 tok/s is ~7.5 ms per token across 8 layers, nowhere near that GPU's
 arithmetic limit. Deleting redundant FLOPs from a workload that was never
 FLOP-bound buys almost nothing. The CPU is genuinely compute-bound, and the CPU
-is what the deployed app runs on, so users got the 3.5×. The optimisation
-landed on the right target because of where the app is deployed, not because of
-the reasoning that motivated it.
+is what the deployed app runs on. The optimisation landed on the right target
+because of where the app is deployed, not because of the reasoning that
+motivated it.
+
+**And the number to quote is the smallest one.** Three speedups came out of
+this: 3.5× on this machine's CPU, 1.06× on the GPU, and **1.8× on the deployed
+app** — the only one any user experiences. The deployed figure is also the
+least rigorous, because the app has no `--no-kv-cache` switch to interleave
+against, so its "before" is a historical measurement from another session on a
+shared host. That caveat is recorded in `spec.json` next to the number rather
+than in prose alone. Reporting the 3.5× as "the speedup" would have been true
+of hardware nobody uses.
 
 **The second thing worth telling:** the byte-identity test passed on CPU and
 then failed on CUDA bf16, on 4 of 5 seeds. Chasing it on *logits* rather than

@@ -729,19 +729,32 @@ Streamlit touched zero inference code.
 |---|---|
 | Cached and uncached generation byte-identical (fp32) | ✅ tiny model in CI, plus the real 52M model on CPU (3 seeds) and CUDA (10 seeds, 1,500 tokens) |
 | Both truncation paths covered | ✅ prompt crossing `block_size` mid-generation, and a 661-token prompt whose every step slides |
-| Full suite green | ✅ **151 collected** (was 134), 146 passed / 5 skipped |
+| Full suite green | ✅ **154 collected** (was 134); CI: 142 passed / 5 skipped / 7 deselected |
 | Causality test still green | ✅ — and joined by its cache twin: one-token-at-a-time decoding must equal one full forward |
 | Local CPU + GPU measured, n≥5, mean **and** range | ✅ n=7 per cell, interleaved |
 | Deployed re-measured against the published baseline | ✅ see `docs/DEPLOY.md` |
 
 ### Measured results
 
-n=7 per cell, the two arms **interleaved** so clock drift lands on both:
+Local rows: n=7 per cell, the two arms **interleaved** so clock drift lands on
+both. Deployed row: n=5 through the app's own caption, seeds 42–46, one warm-up
+generation discarded.
 
 | Device | Before | After | |
 |---|---|---|---|
-| CPU (fp32) — what the deployed app runs | 23.4 tok/s (22.7–24.6) | **82.8 (74.9–88.0)** | **3.5×** |
+| **Deployed** (Community Cloud, shared vCPU) | 16.0 tok/s (12.0–20.0, n=7) | **29.0 (26.2–30.0, n=5)** | **1.8×** |
+| This machine's CPU (fp32) | 23.4 tok/s (22.7–24.6) | **82.8 (74.9–88.0)** | **3.5×** |
 | RTX 4070 Laptop (bf16) | 124.4 tok/s (123.2–125.7) | **132.4 (130.5–133.2)** | **1.06×** |
+
+**The deployed row is the one that matters and the one measured least
+rigorously.** The app has no `--no-kv-cache` switch, so its "before" is the
+historical M8/M9 QA figure — another session, shared host, different
+neighbours — rather than an interleaved control. The ranges don't overlap
+(26.2 > 20.0) and the new spread is less than half as wide (3.8 vs 8.0), so the
+gain is real; but 1.8× should not be quoted with the confidence of the local
+3.5×, and `spec.json` carries that caveat as a field rather than only in prose.
+The gap between 1.8× and 3.5× is hardware: a free shared vCPU has fewer cores
+and less bandwidth, so there is less to win by removing redundant arithmetic.
 
 Peak working set unchanged (775.6 → 775.3 MB short prompt; 796.4 → 797.6 MB at
 full context). The cache's exact 18.5 MB is absorbed, because the uncached path

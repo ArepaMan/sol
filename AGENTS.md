@@ -218,11 +218,15 @@ imports the latter, and `tests/test_spec_drift.py` fails if they're stale. See `
 - [x] Post-M9 KV cache (`src/model.py` `KVCache`/`LayerKVCache`, `use_cache` on both
       generation loops, `--no-kv-cache` to run the old path). Generation used to re-run
       the whole growing prefix through all 8 layers per token — O(n²), and every
-      recomputation redundant by causality. **CPU 23.4 → 82.8 tok/s (3.5×), GPU
-      124.4 → 132.4 (1.06×)**, n=7 per cell with the arms interleaved; peak RSS
-      unchanged (775.6 → 775.3 MB). Cached and uncached output is **byte-identical at
+      recomputation redundant by causality. **Deployed 16.0 → 29.0 tok/s (1.8×, n=5)**
+      — the number users actually get — plus local **CPU 23.4 → 82.8 (3.5×)** and
+      **GPU 124.4 → 132.4 (1.06×)**, n=7 per cell with the arms interleaved; peak RSS
+      unchanged (775.6 → 775.3 MB). The deployed pair spans two sessions on a shared
+      host (the UI has no `--no-kv-cache` to interleave against), so it is the least
+      rigorous of the three — flagged in `spec.json` as a field, not just in prose.
+      Cached and uncached output is **byte-identical at
       fp32** — the safety property, verified on the real model on CPU and CUDA, and
-      enforced by `tests/test_infer.py`. **151 tests** (was 134). Three things worth
+      enforced by `tests/test_infer.py`. **154 tests** (was 134). Three things worth
       knowing: the GPU gain is small because batch-1 generation is launch-bound, not
       FLOP-bound; byte-identity does *not* hold at bf16 (~1e-2 of logit scale from 8
       mantissa bits over 8 layers — rounding, not a masking bug, pinned by a
@@ -234,7 +238,8 @@ imports the latter, and `tests/test_spec_drift.py` fails if they're stale. See `
 - [ ] Residual: a true wake-from-sleep cold start (needs 12 h idle) is still unmeasured.
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 151 tests collected (146 passed, 5 skipped). `gradient_checkpointing` flipped to
+RTX 4070 Laptop (sm_89), 154 tests collected (all passing here; 5 skip on a
+machine without the gitignored corpora). `gradient_checkpointing` flipped to
 **false** after measurement (M4) — chosen config peaks at 2344 MiB, far under the
 7400 MiB target. M5's baseline run took 30.3h wall-clock (16.9h training + 12.17h the
 laptop was asleep, twice — see `experiments/001_baseline/run.md`); awake-time

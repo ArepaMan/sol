@@ -64,7 +64,7 @@ python -m scripts.export_spec --check
 pytest -m "not gpu" -q
 ```
 
-Expected: **141 passed, 5 skipped, 7 deselected**. The 7 deselected are GPU
+Expected: **142 passed, 5 skipped, 7 deselected**. The 7 deselected are GPU
 tests; the 5 skipped are `tests/test_pipeline_artifacts.py`'s corpus-dependent
 checks, which have no `.jsonl`/`.bin` to read on a runner. That combination —
 no GPU, no dataset — is the whole point: CI is a fresh clone, which is what

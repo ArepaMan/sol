@@ -114,10 +114,16 @@ with gr.Blocks(title="Sol — a 52M-parameter story model", css=CSS) as demo:
                     )
                     go = gr.Button("Write the story", variant="primary")
                     output = gr.Textbox(label="Sol's story", lines=14, show_copy_button=True)
+                    # The rate quoted here is borrowed from the *Streamlit*
+                    # deployment (docs/DEPLOY.md), because this Gradio app has
+                    # never been deployed anywhere to measure — HF put Gradio
+                    # Spaces behind PRO. Both run the same SolGenerator on a
+                    # free shared CPU, so it is the closest measured number
+                    # rather than a guess, but it is not this app's own.
                     gr.Markdown(
                         "This Space runs on a free CPU and sleeps when idle — **the first "
                         "request after a nap can take ~60 s** while the model loads. "
-                        "After that, generation streams at roughly 12–20 tokens/second.",
+                        "After that, generation streams at roughly 26–30 tokens/second.",
                         elem_classes="sol-note",
                     )
                 with gr.Column(scale=1):

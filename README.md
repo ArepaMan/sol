@@ -1,5 +1,7 @@
 # Sol
 
+[![CI](https://github.com/ArepaMan/sol/actions/workflows/ci.yml/badge.svg)](https://github.com/ArepaMan/sol/actions/workflows/ci.yml)
+
 A ~52M-parameter decoder-only transformer trained from scratch on TinyStories — data
 pipeline, hand-written architecture, eval harness, ablations, and a deployed demo, all on
 a single 8 GB laptop GPU.

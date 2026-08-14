@@ -72,10 +72,38 @@ DEPLOYMENT = {
     "tokens_per_second_deployed": 16.0,
     "tokens_per_second_range": [12.0, 20.0],
     "tokens_per_second_samples": 7,
-    "tokens_per_second_local_cpu": 24.6,
-    "tokens_per_second_local_gpu": 90.0,
+    "tokens_per_second_local_cpu": 82.8,
+    "tokens_per_second_local_gpu": 132.4,
     "bundle_mib": 103.1,
     "source": "docs/DEPLOY.md",
+}
+
+# Post-M9 KV cache. Recorded as before/after pairs rather than as a single
+# "speedup", because the pair is the claim and a ratio hides both the baseline
+# and the spread. n=7 per cell with the two arms interleaved, so clock drift
+# lands on both -- a first non-interleaved pass overstated the GPU gain as
+# 1.12x. The local_cpu / local_gpu figures in DEPLOYMENT above are the "after"
+# column of this table. Measurement method and caveats: docs/DEPLOY.md.
+KV_CACHE = {
+    "cpu_before": 23.4,
+    "cpu_before_range": [22.7, 24.6],
+    "cpu_after": 82.8,
+    "cpu_after_range": [74.9, 88.0],
+    "gpu_before": 124.4,
+    "gpu_before_range": [123.2, 125.7],
+    "gpu_after": 132.4,
+    "gpu_after_range": [130.5, 133.2],
+    "samples_per_cell": 7,
+    # Past block_size a sliding window shifts every learned absolute position,
+    # invalidating the whole cache -- so it buys nothing there. Measured, not
+    # reasoned: 661-token prompt, every step in the slide regime.
+    "beyond_context_before": 5.9,
+    "beyond_context_after": 6.2,
+    "cache_mib": 18.5,
+    "peak_rss_mb_before": 775.6,
+    "peak_rss_mb_after": 775.3,
+    "output_identical_fp32": True,
+    "source": "docs/DEPLOY.md, docs/ROADMAP.md post-M9",
 }
 
 TRAINING_RUN = {
@@ -195,6 +223,7 @@ def build_spec() -> dict[str, Any]:
             },
         },
         "deployment": {k: v for k, v in DEPLOYMENT.items() if k != "source"},
+        "kv_cache": {k: v for k, v in KV_CACHE.items() if k != "source"},
     }
 
 

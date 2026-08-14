@@ -694,6 +694,105 @@ neither Sol-specific:
 
 ---
 
+## Post-M9 — KV cache for inference
+
+The roadmap was finished. This is the first entry added after it, and it was
+chosen for a specific reason: **there was already a published baseline with
+error bars to measure against** (deployed mean 16.0 tok/s, range 12.0–20.0,
+n=7). An optimisation with a real before-number is worth more here than a
+larger optimisation with an estimated one.
+
+### The problem
+
+`GPT.generate` and `SolGenerator.stream` called the full forward pass on the
+entire growing prefix for every sampled token — `logits, _ = self.model(idx_cond)`
+where `idx_cond` grew by one each step. O(n²) work to produce n tokens. Every
+one of those recomputations was provably redundant: causality means a past
+token's keys and values cannot depend on anything after it, so n−1 of every n
+key/value projections recomputed a value that could not have changed.
+
+### What was built
+
+`KVCache` / `LayerKVCache` in `src/model.py` (preallocated to `block_size`, so
+appending is O(1) rather than a `torch.cat` that recopies the history each
+step), cache-aware `CausalSelfAttention` / `Block` / `GPT.forward`, and
+`use_cache` on both generation loops. The window-slide rule lives in exactly
+one place, `KVCache.next_input`, so the two loops cannot drift apart about it.
+
+Both the model-level loop and `SolGenerator` take it, so both UIs benefit from
+one change — the same payoff M8 got when the HF Space died and the port to
+Streamlit touched zero inference code.
+
+### Exit criteria
+
+| Criterion | Status |
+|---|---|
+| Cached and uncached generation byte-identical (fp32) | ✅ tiny model in CI, plus the real 52M model on CPU (3 seeds) and CUDA (10 seeds, 1,500 tokens) |
+| Both truncation paths covered | ✅ prompt crossing `block_size` mid-generation, and a 661-token prompt whose every step slides |
+| Full suite green | ✅ **151 collected** (was 134), 146 passed / 5 skipped |
+| Causality test still green | ✅ — and joined by its cache twin: one-token-at-a-time decoding must equal one full forward |
+| Local CPU + GPU measured, n≥5, mean **and** range | ✅ n=7 per cell, interleaved |
+| Deployed re-measured against the published baseline | ✅ see `docs/DEPLOY.md` |
+
+### Measured results
+
+n=7 per cell, the two arms **interleaved** so clock drift lands on both:
+
+| Device | Before | After | |
+|---|---|---|---|
+| CPU (fp32) — what the deployed app runs | 23.4 tok/s (22.7–24.6) | **82.8 (74.9–88.0)** | **3.5×** |
+| RTX 4070 Laptop (bf16) | 124.4 tok/s (123.2–125.7) | **132.4 (130.5–133.2)** | **1.06×** |
+
+Peak working set unchanged (775.6 → 775.3 MB short prompt; 796.4 → 797.6 MB at
+full context). The cache's exact 18.5 MB is absorbed, because the uncached path
+was already allocating comparable transient activations for the full prefix and
+discarding them.
+
+### The three things worth telling
+
+1. **The GPU barely moved, and that is the finding.** 1.06×, not the ~4× a FLOP
+   count predicts. At batch 1 with a 52M model, generation on a 4070 is bound
+   by kernel-launch and Python-loop overhead — 132 tok/s is ~7.5 ms per token
+   across 8 layers, nowhere near that GPU's arithmetic limit. Deleting
+   redundant FLOPs from a workload that was never FLOP-bound buys 6%. The CPU
+   is genuinely compute-bound and gets 3.5×. The optimisation landed on the
+   right target because of where the app is deployed, not because of the
+   reasoning that motivated it, and saying so is more useful than the 3.5×.
+
+2. **The first GPU number was 1.12× and it was measurement error.** Running all
+   the uncached samples then all the cached ones let the clocks drift between
+   arms. Interleaving dropped it to 1.06× and tightened both ranges tenfold.
+   The discarded number was the flattering one — same failure mode as M9 QA's
+   single-sample 15–25 band, subtler cause.
+
+3. **Byte-identity holds at fp32 and fails at bf16, and that had to be chased
+   down rather than assumed.** The equivalence test passed everywhere on CPU,
+   then CUDA bf16 diverged on 4 of 5 seeds. Diagnosing it on logits rather than
+   on stories is what settled it: max |Δlogit| is 2e-6 of logit scale in fp32
+   and 1e-2 in bf16 — exactly 8 mantissa bits accumulated over 8 layers — while
+   every argmax on trained weights agrees. Rounding, not a masking bug; a
+   masking bug moves logits by order 1. Pinned as a gpu-marked test
+   parametrised over both dtypes.
+
+### The limitation, stated rather than buried
+
+Past `block_size` the cache buys **nothing**: 6.2 tok/s cached vs 5.9 uncached,
+measured. Learned *absolute* positional embeddings mean a sliding window
+re-embeds every surviving token one position lower, invalidating the whole
+cache at once. RoPE would not fix it — the shift is in the embedding, not the
+score. Sol's default 200 tokens from a short prompt never reaches that regime,
+which is why the cache still pays; the speedup is conditional and the condition
+is documented in `docs/LIMITATIONS.md`.
+
+### Deliberately not done
+
+Skipping the `lm_head` projection on non-final prefill positions. It is real —
+592×32000 per position — but worth ~1% at these prompt lengths, and it would
+make `forward`'s return shape conditional on whether a cache was passed. Not
+worth trading the readability of the M3 deliverable for.
+
+---
+
 ## Interview-skill coverage
 
 | # | Skill | Milestone | Artifact |
@@ -707,3 +806,4 @@ neither Sol-specific:
 | 7 | Reproducibility | M0, M1, M9 | YAML configs, seeds, `COMMANDS.md`, spec-drift test |
 | 8 | Deployment | M8 | Gradio HF Space, HF Hub weights |
 | 9 | Honest limitations | M2, M6, M7, M9 | `LIMITATIONS.md`, a stated null result |
+| 10 | Inference optimisation | post-M9 | KV cache: 3.5× CPU, byte-identical, measured against a published baseline |

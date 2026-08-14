@@ -101,6 +101,7 @@ was measured, not just asserted, and points at the artifact that backs it.
   produce *different* stories — different kernels, different floating-point
   rounding, a different sampled token, and everything after it diverges.
   Worth stating because "seeded" is often read as stronger than it is.
+  **And per precision, too** — see the KV cache section below.
 - **Cold start is a real cost, mitigated but not eliminated.** Free Spaces
   sleep after 48h idle. Four mitigations are in place (`pinned: true`, a
   CPU-only torch wheel, import-time model loading, and an in-UI warning) —
@@ -127,10 +128,68 @@ was measured, not just asserted, and points at the artifact that backs it.
   from GitHub — `docs/DEPLOY.md` documents the sync step rather than
   pretending it's automatic.
 
+## Inference optimisation (post-M9 — KV cache, `src/model.py`, `docs/DEPLOY.md`)
+
+- **The KV cache does nothing past `block_size`, and cannot be made to.** Sol
+  uses learned *absolute* positional embeddings. When generation passes 512
+  tokens the window slides, every surviving token is re-embedded one position
+  lower, and every cached key/value goes stale simultaneously — so the cache
+  resets and re-prefills the whole window each step. Measured in exactly that
+  regime (661-token prompt, truncated to 511, every step sliding): **6.2 tok/s
+  cached vs 5.9 uncached**, which is nothing. RoPE, the usual answer, would not
+  fix it either: the shift is in the embedding, not just in the attention
+  score. A cache that survived the slide would need position-independent
+  keys — a different architecture, not a different cache. Sol's default 200
+  tokens from a short prompt never enters this regime, which is why the cache
+  is still worth having; but the speedup is conditional and the condition is
+  worth saying out loud.
+- **The GPU speedup is 1.06×, not the ~4× the FLOP argument predicts.** At
+  batch 1 with a 52M-parameter model, generation on the 4070 is bound by
+  kernel-launch and Python-loop overhead, not arithmetic: 132 tok/s is ~7.5 ms
+  per token across 8 layers, far more time than that GPU needs to do the maths.
+  Removing redundant FLOPs from a workload that was never FLOP-bound buys ~6%.
+  The CPU, which is genuinely compute-bound and is what the deployed app runs
+  on, gets **3.5×** (23.4 → 82.8 tok/s, n=7 interleaved). The honest reading is
+  that this optimisation was aimed at the right target by accident of where the
+  app is deployed, not by the reasoning that motivated it.
+- **Byte-identical cached-vs-uncached generation holds at fp32, not at bf16.**
+  A cached decode step reduces over the key dimension in a different order than
+  a full-width forward does. In fp32 that difference is ~2e-6 of logit scale
+  and sampling never notices (verified byte-identical over 1,500 sampled tokens
+  on CUDA and across three seeds on CPU). In bf16 — 8 mantissa bits accumulated
+  over 8 layers — it reaches ~1e-2 of logit scale, enough to move a multinomial
+  draw across a CDF boundary and diverge the story from there. Both outputs are
+  valid samples from the same distribution and every argmax agrees on trained
+  weights, so this is rounding rather than a logic error; it is pinned as a
+  gpu-marked test parametrised over both dtypes, with the tolerances as the
+  point. The practical cost: a bf16 CUDA story generated before the cache
+  cannot be reproduced after it, at the same seed.
+- **A first GPU measurement said 1.12× and was wrong.** Running all the
+  uncached samples and then all the cached ones let the GPU's clocks drift
+  between the two arms. Interleaving them dropped the figure to 1.06× and
+  tightened both ranges by an order of magnitude. Recorded because the
+  discarded number was the one that flattered the change — the same failure
+  mode as the 15–25 tok/s band above, just with a subtler cause.
+- **The previously published "~90 tok/s" GPU figure was under-measured.**
+  Re-running the *unchanged* path today (`--no-kv-cache` is byte-for-byte the
+  pre-cache loop) gives 124.4 tok/s, n=7, range 123.2–125.7. The old number
+  looks like a single sample taken on the `--stream` path, which pays for
+  per-token console flushing — measured now, that path gives mean 102.2 with a
+  range of 77.4–119.2. Corrected in `docs/DEPLOY.md` rather than left standing.
+- **`src/generate_samples.py` is deliberately pinned to the uncached path.**
+  It produced M6's published artifacts and `docs/RUBRIC.md` cites generations
+  by id, so it has to keep reproducing them from committed code. Measured 10/10
+  byte-identical with the cache at its CUDA fp32 — but "identical in practice"
+  is the wrong guarantee for a script whose output other documents index into,
+  and the cache buys only ~6% on GPU. Same call M8 made when it left this file
+  out of the EOT-stop fix.
+
 ## What's next
 
-M9 closes the loop: spec de-drift (`scripts/export_spec.py`) and portfolio
+M9 closed the loop: spec de-drift (`scripts/export_spec.py`) and portfolio
 wiring. The three standing technical gaps, unchanged and unfixed, are
 coherence/entity drift, the inherited mojibake in 6.20% of the training
 corpus, and the un-ablated architecture choices (learned PE, LayerNorm+GELU)
-at the top of this document.
+at the top of this document — the first of which the KV cache work has now
+given a second, independent reason to revisit, since learned absolute
+positions are also what caps the cache at `block_size`.

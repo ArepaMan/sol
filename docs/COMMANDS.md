@@ -166,6 +166,25 @@ diff is clean):
 python -m src.infer --seed 42 > a.txt; python -m src.infer --seed 42 > b.txt; fc.exe a.txt b.txt
 ```
 
+### KV cache before/after (post-M9)
+
+`--no-kv-cache` runs the pre-cache O(n²) path: same sampling, same seed, and at
+fp32 byte-identical output. It is kept reachable so the speedup can be measured
+on demand rather than taken on faith. Timing is on stderr, so the two stdout
+files should compare equal:
+
+```powershell
+python -m src.infer --model-dir export/sol-001 --device cpu --seed 42 --max-new-tokens 200
+```
+
+```powershell
+python -m src.infer --model-dir export/sol-001 --device cpu --seed 42 --max-new-tokens 200 --no-kv-cache
+```
+
+Measured 23.4 → 82.8 tok/s on CPU (n=7, interleaved). On CUDA it is 1.06×, and
+past `block_size` it is nothing at all — both explained in
+[`docs/DEPLOY.md`](DEPLOY.md#inference-latency).
+
 Full deployment procedure, including the HF model repo and the Space:
 [`docs/DEPLOY.md`](DEPLOY.md).
 

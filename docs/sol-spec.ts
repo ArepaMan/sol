@@ -108,9 +108,38 @@ export const solSpec = {
         20.0,
       ],
       "tokens_per_second_samples": 7,
-      "tokens_per_second_local_cpu": 24.6,
-      "tokens_per_second_local_gpu": 90.0,
+      "tokens_per_second_local_cpu": 82.8,
+      "tokens_per_second_local_gpu": 132.4,
       "bundle_mib": 103.1,
+    },
+    "kv_cache": {
+      "cpu_before": 23.4,
+      "cpu_before_range": [
+        22.7,
+        24.6,
+      ],
+      "cpu_after": 82.8,
+      "cpu_after_range": [
+        74.9,
+        88.0,
+      ],
+      "gpu_before": 124.4,
+      "gpu_before_range": [
+        123.2,
+        125.7,
+      ],
+      "gpu_after": 132.4,
+      "gpu_after_range": [
+        130.5,
+        133.2,
+      ],
+      "samples_per_cell": 7,
+      "beyond_context_before": 5.9,
+      "beyond_context_after": 6.2,
+      "cache_mib": 18.5,
+      "peak_rss_mb_before": 775.6,
+      "peak_rss_mb_after": 775.3,
+      "output_identical_fp32": true,
     },
   } as const;
 

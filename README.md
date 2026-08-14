@@ -106,10 +106,16 @@ python -m scripts.export_weights --out export/sol-001; $env:SOL_MODEL_DIR = "exp
 ```
 
 Generation stops at the model's own end-of-story token, streams, and is
-reproducible per device: `--seed 42` twice gives byte-identical stdout. Measured
-throughput: **~90 tok/s** on the 4070 (bf16), **21.6 tok/s** on CPU (fp32) — the
-demo runs at the CPU number. Deployment procedure and the full cold-start
-analysis: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+reproducible per device: `--seed 42` twice gives byte-identical stdout.
+Generation uses a **KV cache**, added after the roadmap closed and measured
+against the published baseline it replaced: **23.4 → 82.8 tok/s on CPU (3.5×)**,
+**124.4 → 132.4 on the 4070 (1.06×)**, n=7 per cell, cached and uncached output
+byte-identical at fp32. The GPU number being the small one is the interesting
+part — at batch 1 a 52M model is launch-overhead-bound, not FLOP-bound, so
+deleting redundant arithmetic barely helps; the CPU, which is what the demo
+runs on, is genuinely compute-bound. Deployment procedure, the cold-start
+analysis, and why the cache buys nothing past `block_size`:
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## How to run
 

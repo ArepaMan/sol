@@ -239,14 +239,65 @@ it applies to HF Spaces and is kept only for the Gradio/PRO path.
 
 ## Inference latency
 
-Measured with `python -m src.infer --model-dir export/sol-001 --device cpu
---seed 42 --max-new-tokens 200`:
+Measured with `python -m src.infer --model-dir export/sol-001 --device {cpu,cuda}
+--prompt "Once upon a time" --seed 42 --max-new-tokens 200`, adding
+`--no-kv-cache` for the "before" column. n=7 per cell, the two arms
+**interleaved** so any thermal or clock drift lands on both.
 
-| Device | Rate |
-|---|---|
-| RTX 4070 Laptop (bf16) | ~90 tok/s |
-| This machine's CPU (fp32) | 21.6–24.6 tok/s |
-| **Community Cloud, deployed (fp32)** | **mean 16.0 tok/s, range 12.0–20.0** (n=7) |
+| Device | Before (no KV cache) | After (KV cache) | |
+|---|---|---|---|
+| This machine's CPU (fp32) | 23.4 tok/s (22.7–24.6) | **82.8 tok/s (74.9–88.0)** | **3.5×** |
+| RTX 4070 Laptop (bf16) | 124.4 tok/s (123.2–125.7) | **132.4 tok/s (130.5–133.2)** | **1.06×** |
+| **Community Cloud, deployed (fp32)** | mean 16.0, range 12.0–20.0 (n=7) | *see below* | |
+
+**The GPU barely moved, and that is the informative half.** At batch 1 with a
+52M-parameter model, generation on a 4070 is bound by kernel-launch and
+Python-loop overhead, not by arithmetic — 132 tok/s is ~7.5 ms per token across
+8 layers, which is nowhere near what that GPU can compute in 7.5 ms. Deleting
+redundant FLOPs from something that was never FLOP-bound buys 6%. The CPU is
+genuinely compute-bound, so it gets 3.5× — and the CPU is what the deployed app
+runs on, so the 3.5× is the number that reaches users.
+
+**A first pass measured the GPU at 1.12×.** Alternating the two arms instead of
+running all of one then all of the other dropped it to 1.06× and tightened both
+ranges by an order of magnitude. The extra 6% was cold-clock drift on the arm
+that ran first. Written down because the discarded number was the flattering one.
+
+**The old "~90 tok/s" GPU figure was under-measured.** Re-running the *unchanged*
+code path today (`--no-kv-cache`, which is byte-for-byte the pre-cache loop)
+gives 124.4 tok/s, n=7, range 123.2–125.7. The ~90 appears to have come from a
+single sample on the `--stream` path, which pays for per-token console flushing:
+measured now, streaming on GPU gives mean 102.2 with a range of **77.4–119.2**.
+That is the same error as the 15–25 band below — one sample quoted as if it
+described a distribution — and it is corrected here rather than left standing.
+
+### Past `block_size`, the cache buys nothing
+
+Sol uses **learned absolute** positional embeddings. Once generation passes the
+512-token window, the window slides, every surviving token is re-embedded one
+position lower, and every cached key/value is stale at once — so the cache is
+dropped and re-prefilled each step. Measured on a 661-token prompt (truncated to
+511, so every step runs in that regime): **6.2 tok/s cached vs 5.9 uncached** —
+i.e. nothing, within noise. RoPE would not rescue this either; the shift is in
+the embedding, not just in the attention score. Sol's default 200 new tokens
+from a short prompt never reaches this path, which is why the cache still pays.
+
+### Memory: the cache is free in practice
+
+19 MB was the estimate; 18.5 MB is the exact figure (2 × 8 layers × 512 ctx ×
+592 channels × 4 bytes). Peak working set, measured in separate processes:
+
+| | Before | After |
+|---|---|---|
+| 200 tokens from a short prompt | 775.6 MB | 775.3 MB |
+| 200 tokens at full 512-token context | 796.4 MB | 797.6 MB |
+
+Unchanged. The cache's 18.5 MB is absorbed because the uncached path was
+allocating comparable transient activations for the whole prefix on every step
+anyway — it just threw them away afterwards. Nothing here moves against the
+1 GB ceiling.
+
+### The deployed baseline this replaces
 
 **The originally predicted 15–25 tok/s band was wrong, and QA caught it.** The
 single measurement taken at deploy time was 16.0 tok/s, which sat inside that
@@ -258,14 +309,25 @@ single sample cannot tell you a range, and quoting one as if it could is the
 error worth naming.
 
 A shared vCPU also has no throughput guarantee — that spread is partly other
-tenants, not just variance in story length. A 200-token story takes 10–17 s,
-which is exactly why the app streams token-by-token instead of returning one
-block: 15 s of nothing reads as broken, 15 s of arriving text reads as thinking.
+tenants, not just variance in story length.
 
 `src/infer.py` uses fp32 on CPU deliberately (`resolve_dtype`): CPU bf16 runs
 through reference kernels on most x86 parts and is slower than fp32, and since
 the weights were bf16 already, fp32 inference is a strict widening — no quality
 change.
+
+### Reproducing the before/after
+
+The pre-cache path is kept reachable rather than deleted, so the comparison can
+be re-run at any time instead of taken on trust:
+
+```bash
+python -m src.infer --model-dir export/sol-001 --device cpu --seed 42 --no-kv-cache
+```
+
+Its output is byte-identical to the cached run at fp32 — that equivalence is the
+safety argument for the whole change, and it is enforced by `tests/test_infer.py`
+rather than checked once by hand.
 
 ## Reproducibility
 
@@ -281,3 +343,14 @@ Determinism is per-device: a CUDA seed-42 sample and a CPU seed-42 sample are
 both individually reproducible, but they are not the same story. Different
 kernels produce different floating-point rounding, which changes the sampled
 token, which changes everything after it.
+
+**It is also per-precision, which the KV cache made visible.** Cached and
+uncached generation are byte-identical in fp32 — on CPU and on CUDA, verified
+over 1,500 sampled tokens. In bf16 they are not: a cached decode step reduces
+over the key dimension in a different order than a full-width forward, and
+bf16's 8 mantissa bits accumulated over 8 layers put that difference at ~1% of
+logit scale, which is eventually enough to move a multinomial draw across a CDF
+boundary. Both stories are valid samples from the same distribution; neither is
+more correct. The deployed app is CPU fp32, so this does not touch it, but it
+is the reason `--seed 42` on the 4070 no longer reproduces a story generated
+before the cache landed.

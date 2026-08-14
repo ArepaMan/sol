@@ -103,6 +103,27 @@ def test_deployment_urls_are_live_not_placeholders(spec: dict):
     assert "coming-soon" not in json.dumps(dep)
 
 
+def test_kv_cache_speedups_carry_a_real_range(spec: dict):
+    """M9 QA's mistake, encoded as a gate: a range needs more than one sample.
+    Every before/after cell must carry n>=5, a range that is actually a range,
+    and a mean that falls inside it — so a future edit can't quietly publish a
+    point estimate dressed up as a spread."""
+    kv = spec["kv_cache"]
+    assert kv["samples_per_cell"] >= 5
+    for cell in ("cpu_before", "cpu_after", "gpu_before", "gpu_after"):
+        lo, hi = kv[f"{cell}_range"]
+        assert lo < hi, f"{cell}: a single sample cannot establish a range"
+        assert lo <= kv[cell] <= hi, f"{cell}: mean {kv[cell]} sits outside {lo}-{hi}"
+
+
+def test_kv_cache_deployed_figure_is_the_cpu_one(spec: dict):
+    """The deployed app is CPU-only, so its throughput claim has to track the
+    CPU measurement, not the GPU one. Guards against someone updating the
+    headline number from the wrong row of the table."""
+    assert spec["deployment"]["tokens_per_second_local_cpu"] == spec["kv_cache"]["cpu_after"]
+    assert spec["deployment"]["tokens_per_second_local_gpu"] == spec["kv_cache"]["gpu_after"]
+
+
 def test_max_train_tokens_matches_the_measured_corpus(spec: dict):
     # The original 400M target was lowered to the measured 357,852,786.
     assert spec["data"]["max_train_tokens"] == spec["data"]["train_tokens"]

@@ -1,7 +1,9 @@
 # Sol — interview notes
 
-Nine skills, each with the artifact that proves it and the number to quote. If a
-row has no number, it isn't evidence yet.
+Ten skills, each with the artifact that proves it and the number to quote. If a
+row has no number, it isn't evidence yet. (Nine were the roadmap's; the tenth,
+inference optimisation, was added after it — the roadmap being finished is not
+the same as the project being finished.)
 
 Every figure here is generated into [`docs/spec.json`](spec.json) by
 `scripts/export_spec.py` and guarded by `tests/test_spec_drift.py`, so this page
@@ -109,7 +111,7 @@ a punishing cut. Anyone can report the ablation that worked.
 ## 7. Reproducibility
 
 **Artifact:** `scripts/export_spec.py`, `tests/test_spec_drift.py`, `docs/COMMANDS.md`
-**Number:** **134 tests**; `python -m src.infer --seed 42` twice → byte-identical.
+**Number:** **151 tests**; `python -m src.infer --seed 42` twice → byte-identical.
 
 YAML is the single source of truth; nothing downstream hardcodes a
 hyperparameter. Determinism is per-device and stated as such — CUDA seed 42 and
@@ -163,6 +165,52 @@ assembled at the end. Entries include ones that make the project look worse —
 the 2-UI maintenance cost, the single-rater rubric, `best.pt` being selected
 wrongly by a noisy periodic eval and superseded by `latest.pt` on
 re-measurement.
+
+## 10. Inference optimisation
+
+**Artifact:** `src/model.py` (`KVCache`), `tests/test_infer.py`, `docs/DEPLOY.md`
+**Number:** CPU **23.4 → 82.8 tok/s (3.5×)**, n=7 interleaved; GPU **124.4 →
+132.4 (1.06×)**; peak RSS unchanged.
+
+Generation re-ran the whole growing prefix through all 8 layers for every
+token — O(n²) to produce n tokens, and every recomputation provably redundant
+because causality means a past token's keys and values cannot depend on
+anything after it. The cache is ~19 MB against ~400 MB of headroom.
+
+The safety argument is one property, not a code review: cached and uncached
+generation must be **byte-identical** from the same seed. That is a total
+property — one flipped token diverges everything after it — so it is very hard
+to pass by accident. The pre-cache path is kept reachable (`--no-kv-cache`)
+specifically so the comparison stays runnable; "the old code still exists and
+still agrees" beats "the new code looks right".
+
+**The thing worth telling:** the GPU sped up by **6%**, not the ~4× the FLOP
+count predicts, and that is the more interesting number. At batch 1 with a 52M
+model, generation on a 4070 is bound by kernel-launch and Python-loop overhead
+— 132 tok/s is ~7.5 ms per token across 8 layers, nowhere near that GPU's
+arithmetic limit. Deleting redundant FLOPs from a workload that was never
+FLOP-bound buys almost nothing. The CPU is genuinely compute-bound, and the CPU
+is what the deployed app runs on, so users got the 3.5×. The optimisation
+landed on the right target because of where the app is deployed, not because of
+the reasoning that motivated it.
+
+**The second thing worth telling:** the byte-identity test passed on CPU and
+then failed on CUDA bf16, on 4 of 5 seeds. Chasing it on *logits* rather than
+on stories settled it in one measurement — max |Δlogit| is 2e-6 of logit scale
+in fp32 and 1e-2 in bf16, which is exactly 8 mantissa bits accumulated over 8
+layers, while every argmax on trained weights still agrees. Rounding, not a
+masking bug; a masking bug moves logits by order 1, not 1%. It is now a
+gpu-marked test parametrised over both dtypes with the tolerances as the
+payload. And the first GPU speedup measurement, 1.12×, was thrown out: running
+all of one arm then all of the other let clocks drift: interleaving gave 1.06×
+with ranges ten times tighter.
+
+**And the limitation:** past `block_size` the cache buys nothing — 6.2 vs 5.9
+tok/s, measured. Learned absolute positional embeddings mean a sliding window
+re-embeds every surviving token one position lower and invalidates the entire
+cache at once. RoPE would not fix it; the shift is in the embedding, not the
+score. Which is a second, independent argument for the RoPE change that
+`docs/LIMITATIONS.md` already wanted for coherence.
 
 ---
 

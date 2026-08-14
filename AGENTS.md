@@ -129,7 +129,8 @@ disproportionate interview weight.
 
 ## Current status
 
-**M0–M9 complete — the roadmap is done.** Live demo:
+**M0–M9 complete — the roadmap is done**, plus a post-M9 KV cache (see the
+bottom of the checklist below). Live demo:
 <https://sol-52m.streamlit.app> · weights:
 <https://huggingface.co/SpicyGuac/sol-001>. **The free HF Space plan died
 mid-milestone** — HF moved Gradio Spaces behind PRO (`402 Payment Required`), so
@@ -214,10 +215,26 @@ imports the latter, and `tests/test_spec_drift.py` fails if they're stale. See `
       `remark-gfm` so markdown tables rendered as literal pipes (3 pages affected, 2 of
       them already published), and `demo.gallery` was dropped unless `demo.component`
       happened to be `ScreenshotGallery`.
+- [x] Post-M9 KV cache (`src/model.py` `KVCache`/`LayerKVCache`, `use_cache` on both
+      generation loops, `--no-kv-cache` to run the old path). Generation used to re-run
+      the whole growing prefix through all 8 layers per token — O(n²), and every
+      recomputation redundant by causality. **CPU 23.4 → 82.8 tok/s (3.5×), GPU
+      124.4 → 132.4 (1.06×)**, n=7 per cell with the arms interleaved; peak RSS
+      unchanged (775.6 → 775.3 MB). Cached and uncached output is **byte-identical at
+      fp32** — the safety property, verified on the real model on CPU and CUDA, and
+      enforced by `tests/test_infer.py`. **151 tests** (was 134). Three things worth
+      knowing: the GPU gain is small because batch-1 generation is launch-bound, not
+      FLOP-bound; byte-identity does *not* hold at bf16 (~1e-2 of logit scale from 8
+      mantissa bits over 8 layers — rounding, not a masking bug, pinned by a
+      gpu-marked test); and past `block_size` the cache buys nothing at all, because
+      learned absolute positions invalidate every entry when the window slides. The
+      previously published "~90 tok/s" GPU figure was a single under-measured sample —
+      the unchanged path measures 124.4 today. Full writeup: `docs/ROADMAP.md`
+      post-M9, `docs/LIMITATIONS.md`, `docs/DEPLOY.md`.
 - [ ] Residual: a true wake-from-sleep cold start (needs 12 h idle) is still unmeasured.
 
 Verified on this machine: torch `2.6.0+cu124`, CUDA available, **bf16 supported**,
-RTX 4070 Laptop (sm_89), 123 tests passing. `gradient_checkpointing` flipped to
+RTX 4070 Laptop (sm_89), 151 tests collected (146 passed, 5 skipped). `gradient_checkpointing` flipped to
 **false** after measurement (M4) — chosen config peaks at 2344 MiB, far under the
 7400 MiB target. M5's baseline run took 30.3h wall-clock (16.9h training + 12.17h the
 laptop was asleep, twice — see `experiments/001_baseline/run.md`); awake-time

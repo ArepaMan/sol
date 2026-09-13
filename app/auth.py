@@ -38,7 +38,7 @@ import time
 
 import streamlit as st
 
-from app.about import GITHUB
+from app.about import CONTACT
 
 SECRET_KEY = "app_password"
 ENV_VAR = "SOL_APP_PASSWORD"
@@ -110,10 +110,9 @@ def gate(*, tagline: str = "") -> bool:
         st.markdown(tagline)
     st.info(
         "This demo is password-protected. It runs a real model on one free shared "
-        "CPU, so access is handed out by request — **reach out and I'll send you the "
-        f"password** (contact details are on [GitHub]({GITHUB}))."
-        " The code, the weights, the evals, and the writeups are all public in the "
-        "meantime."
+        "CPU, so access is handed out by request — **[reach out to me]"
+        f"({CONTACT}) and I'll send you the password**. The code, the weights, the "
+        "evals, and the writeups are all public in the meantime."
     )
 
     with st.form("sol_password"):

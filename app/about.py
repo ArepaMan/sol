@@ -11,6 +11,9 @@ from __future__ import annotations
 
 GITHUB = "https://github.com/ArepaMan/sol"
 HF_MODEL = "https://huggingface.co/SpicyGuac/sol-001"
+#: Where to ask for the demo password (app/auth.py). A contact page rather
+#: than a bare email address, because this string renders on a public page.
+CONTACT = "https://manuelvargas.dev/contact"
 
 TAGLINE = (
     "A 52M-parameter transformer trained from scratch on TinyStories, on one 8 GB "

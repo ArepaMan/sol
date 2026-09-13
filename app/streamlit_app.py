@@ -16,8 +16,16 @@ Streamlit reruns the whole script on each widget interaction, so without it,
 each click would try to load a 212 MB fp32 model and the app would OOM almost
 immediately.
 
+**Access control.** The deployed app is behind a shared password
+(`app/auth.py`) because generation burns the single free vCPU this container
+gets. The gate is a no-op when no password is configured, so local runs and
+forks are unaffected.
+
 Run locally:
     SOL_MODEL_DIR=export/sol-001 streamlit run app/streamlit_app.py
+
+Run locally *with* the gate, to check it:
+    SOL_APP_PASSWORD=letmein SOL_MODEL_DIR=export/sol-001 streamlit run app/streamlit_app.py
 """
 
 from __future__ import annotations
@@ -32,6 +40,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.about import ABOUT_MD, EXAMPLES, FACTS, GITHUB, TAGLINE  # noqa: E402
+from app.auth import gate  # noqa: E402
 from src.infer import SolGenerator  # noqa: E402
 
 REPO_ID = os.environ.get("SOL_REPO_ID", "SpicyGuac/sol-001")
@@ -55,6 +64,13 @@ def load_generator() -> tuple[SolGenerator, float]:
         model_dir = str(Path(paths[0]).parent)
     return SolGenerator.from_pretrained(model_dir), time.perf_counter() - t0
 
+
+# Before the title, before the spinner, before anything expensive: an
+# unauthenticated visitor must not trigger the 103 MiB hf_hub_download or the
+# model load. gate() draws its own title when it blocks. See app/auth.py for
+# what the gate is and is not protecting.
+if not gate(tagline=TAGLINE):
+    st.stop()
 
 st.title("Sol ☀️")
 st.markdown(TAGLINE)

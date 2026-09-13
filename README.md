@@ -10,7 +10,8 @@ a single 8 GB laptop GPU.
 
 ## Status
 
-🚀 **Live demo: <https://sol-52m.streamlit.app>** · Weights:
+🚀 **Live demo: <https://sol-52m.streamlit.app>** (password-protected — open an
+issue and I'll send you one; see [`docs/DEPLOY.md`](docs/DEPLOY.md#5-set-the-password) for why) · Weights:
 [`SpicyGuac/sol-001`](https://huggingface.co/SpicyGuac/sol-001)
 
 ✅ **M0–M9 complete — the roadmap is done.** Environment, data pipeline, EDA, model,

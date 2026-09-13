@@ -33,6 +33,11 @@ tqdm==4.67.1
 # pinned here because it arrives as a matplotlib dependency, same as locally.
 matplotlib==3.10.0
 
+# tests/test_auth.py imports app/auth.py, which imports streamlit at module
+# level. Pinned to the same version app/requirements.txt deploys, so CI checks
+# the gate against the library the live demo actually runs.
+streamlit==1.41.1
+
 # Dev
 pytest==8.3.4
 ruff==0.8.6

@@ -10,8 +10,8 @@
 #
 # The runner has no GPU and no dataset, which is the point: it reproduces the
 # fresh-clone environment exactly. GPU tests are already marked, so `-m "not gpu"`
-# deselects 7 of 154, and the 5 pipeline-artifact tests skip themselves when the
-# corpora are absent. Expected: 142 passed, 5 skipped, 7 deselected.
+# deselects 7 of 168, and the 5 pipeline-artifact tests skip themselves when the
+# corpora are absent. Expected: 156 passed, 5 skipped, 7 deselected.
 
 name: CI
 
@@ -69,6 +69,7 @@ jobs:
             scripts/export_spec.py \
             scripts/export_weights.py \
             scripts/plot_ablations.py \
+            tests/test_auth.py \
             tests/test_infer.py \
             tests/test_spec_drift.py
 

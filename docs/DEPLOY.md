@@ -167,6 +167,64 @@ Only five `src/` modules are actually imported: `config`, `model`, `infer`,
 `utils`, `__init__`. The rest of `src/` is never touched at runtime, so none of
 the training dependencies are needed.
 
+## 5. Set the password
+
+The live app is gated behind a single shared password (`app/auth.py`). This is
+not about secrecy — the code, the weights and the evals are all public — it is
+about the **one free shared vCPU**. Sol runs its own weights in this container;
+there is no paid inference API behind it, so nothing is billed per token, but
+generation is single-threaded at ~29 tok/s and `@st.cache_resource` means every
+visitor is queued against the *same* process. A few people looping 400-token
+requests is enough to make the demo unusable for everyone else. Gating it turns
+"anyone who finds the URL" into "anyone who asks", which is the actual intent of
+a portfolio demo.
+
+Set it on Community Cloud under **Settings → Secrets**:
+
+```toml
+app_password = "the-password-you-hand-out"
+```
+
+Secrets take effect on the next app reboot; no redeploy is needed. Locally,
+`SOL_APP_PASSWORD` does the same job:
+
+```bash
+SOL_APP_PASSWORD=letmein SOL_MODEL_DIR=export/sol-001 streamlit run app/streamlit_app.py
+```
+
+**If neither is set, the gate opens.** That is deliberate: a fork, a clone, a
+local run and CI all work with no setup, and the deployed app is the only place
+that needs the secret. The failure mode of a missing secret is an open demo, not
+one nobody can get into — including its owner.
+
+Three details worth knowing, because each was a bug before it was a decision:
+
+- **The gate runs before `load_generator()`.** An unauthenticated visitor must
+  not trigger the 103 MiB `hf_hub_download` or the model load — a gate drawn
+  after the spinner would still pay the expensive part for every drive-by.
+- **`st.secrets.load_if_toml_exists()`, not `st.secrets.get(...)`.** With no
+  `secrets.toml` on disk — the normal state locally and in CI — a plain `.get()`
+  makes Streamlit *render a red "No secrets found" box into the app* before it
+  raises, so catching the exception is not enough to keep it off the page.
+- **A blank secret reads as "disabled", not as a password matching `""`.**
+  Otherwise an empty submit box would unlock a misconfigured deploy.
+
+The comparison is `hmac.compare_digest`, and both sides are stripped — the
+password travels by hand through a chat message or an email, and a trailing
+newline off a clipboard is a support ticket, not an attack. Failed attempts
+sleep 1 s within the session: a speed bump against a scripted guesser in one
+tab, not a lockout, since anyone can open a new session. Against a password long
+enough to be worth sharing by hand, that is the right amount of effort.
+
+**What this is not.** One shared password, no accounts, no server-side session
+store, and anyone holding it can pass it on. It stops casual abuse of a free
+container; it is not an authorization system. `tests/test_auth.py` covers the
+policy — where the password comes from, and what counts as a match.
+
+The Gradio app (`app/demo.py`) reads the same `SOL_APP_PASSWORD` and passes it
+to `demo.launch(auth=...)`, so anyone deploying that one to a PRO Space gets the
+same behaviour without importing the Streamlit-shaped module.
+
 ## Memory: the binding constraint
 
 Community Cloud's free tier caps an app at **1 GB RAM**. Measured on this

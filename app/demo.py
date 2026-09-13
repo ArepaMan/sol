@@ -148,4 +148,9 @@ with gr.Blocks(title="Sol — a 52M-parameter story model", css=CSS) as demo:
 
 
 if __name__ == "__main__":
-    demo.launch()
+    # Gradio has its own auth, so this app does not import app/auth.py: that
+    # module is Streamlit-shaped (st.session_state, st.form). Same password
+    # env var, same "unset means open" rule, so the two stay in step for
+    # anyone who deploys this one to a PRO Space instead.
+    password = (os.environ.get("SOL_APP_PASSWORD") or "").strip()
+    demo.launch(auth=("sol", password) if password else None)

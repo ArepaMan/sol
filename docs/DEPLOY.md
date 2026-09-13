@@ -225,6 +225,55 @@ The Gradio app (`app/demo.py`) reads the same `SOL_APP_PASSWORD` and passes it
 to `demo.launch(auth=...)`, so anyone deploying that one to a PRO Space gets the
 same behaviour without importing the Streamlit-shaped module.
 
+## 6. The per-session generation cap
+
+The password decides *who* gets in; `app/limits.py` decides how much of the
+single shared vCPU any one visitor can hold. Not redundant with the gate: the
+password is handed out by invitation, so everyone past it is welcome, and what
+is worth preventing is one enthusiastic tab holding the queue while someone
+else is trying to look at the project.
+
+**Twenty generations per session**, sized from what a thorough visit actually
+does — click two or three of the four example prompts, write one or two of
+their own, re-run a favourite at a different temperature to watch the sampling
+controls do something. That is ~10. Twenty is double the honest ceiling, which
+is the right side to err on: a visitor who hits a wall mid-look is a far worse
+outcome than a few extra minutes of CPU. `SOL_SESSION_CAP` overrides it and `0`
+disables it.
+
+The remaining count sits in the sidebar from the first visit rather than being
+sprung at the end — stating the budget up front reads as a deliberate
+constraint, which it is, while a counter that only appears once it is nearly
+spent reads as a trap. Below five left it turns from a caption into a warning.
+At zero the button is disabled and a notice explains the cap, links to the
+contact page, and points at the About tab, which stays readable throughout.
+
+**What it is worth, precisely.** `st.session_state` lives for one websocket
+connection, so **reloading the page starts a fresh session and a fresh count**.
+That is a real limit on what this can enforce, and it is not worked around: a
+server-side identity to pin a budget to is exactly the machinery the password
+gate deliberately does without. So this is a courtesy speed bump against a tab
+left looping, not a quota — and the exhausted notice says the reload works,
+because a visitor who concludes the demo is broken costs more than a visitor
+who runs twenty-one stories.
+
+Two implementation details that were bugs first:
+
+- **The count is recorded before generation, not after.** A visitor who
+  navigates away mid-stream still spent the CPU, and an exception partway
+  through must not hand back a free retry.
+- **The sidebar count is drawn through an `st.empty()` placeholder filled at
+  the end of the script.** Streamlit renders top to bottom and the sidebar
+  comes *before* the generation that spends a story, so the number would sit
+  one behind until the next interaction. Rerunning to resync is the obvious
+  reach and is wrong — it discards the story that was just streamed, which is
+  the one thing on screen the visitor came for.
+
+`tests/test_limits.py` covers the policy: what the cap is, what disables it,
+that a typo'd env var falls back to capping rather than to an open tap or a
+crash, and that the remaining count never goes negative (the UI compares
+against `0` to decide "exhausted", and a negative would read as non-zero).
+
 ## Memory: the binding constraint
 
 Community Cloud's free tier caps an app at **1 GB RAM**. Measured on this

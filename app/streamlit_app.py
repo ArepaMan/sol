@@ -18,8 +18,8 @@ immediately.
 
 **Access control.** The deployed app is behind a shared password
 (`app/auth.py`) because generation burns the single free vCPU this container
-gets. The gate is a no-op when no password is configured, so local runs and
-forks are unaffected.
+gets, and each session gets a generation budget on top (`app/limits.py`). Both
+are no-ops when unconfigured, so local runs and forks are unaffected.
 
 Run locally:
     SOL_MODEL_DIR=export/sol-001 streamlit run app/streamlit_app.py
@@ -39,8 +39,14 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.about import ABOUT_MD, EXAMPLES, FACTS, GITHUB, TAGLINE  # noqa: E402
+from app.about import ABOUT_MD, CONTACT, EXAMPLES, FACTS, GITHUB, TAGLINE  # noqa: E402
 from app.auth import gate  # noqa: E402
+from app.limits import (  # noqa: E402
+    record_generation,
+    render_budget_caption,
+    render_exhausted_notice,
+    session_remaining,
+)
 from src.infer import SolGenerator  # noqa: E402
 
 REPO_ID = os.environ.get("SOL_REPO_ID", "SpicyGuac/sol-001")
@@ -90,6 +96,8 @@ with st.sidebar:
         f"Model loaded in {load_seconds:.1f}s. Generation runs on a free shared CPU at "
         "roughly 26-30 tokens/second, so a 200-token story takes ~7s."
     )
+    # Reserved now, filled at the end of the script — see render_budget_caption.
+    budget_slot = st.empty()
     st.divider()
     st.markdown(f"[Source on GitHub]({GITHUB})")
 
@@ -112,11 +120,22 @@ with story_tab:
         prompt = st.session_state.pop("prompt_override")
         st.info(f"Using example: *{prompt}*")
 
-    if st.button("Write the story", type="primary"):
+    # Checked before the button is drawn, so the disabled state and the
+    # explanation appear together rather than the click silently doing nothing.
+    budget_left = session_remaining()
+    exhausted = budget_left == 0
+    if exhausted:
+        render_exhausted_notice(CONTACT)
+
+    if st.button("Write the story", type="primary", disabled=exhausted):
         cleaned = (prompt or "").strip()
         if not cleaned:
             st.warning("Type a story opening first — Sol continues text, it doesn't start from nothing.")
         else:
+            # Counted before the work, not after: a visitor who navigates away
+            # mid-stream still consumed the CPU, and an exception partway
+            # through must not hand back a free retry.
+            record_generation()
             t0 = time.perf_counter()
             st.write(f"**{cleaned}**")
             # stream() yields decoded deltas, which is exactly what
@@ -137,3 +156,6 @@ with story_tab:
 with about_tab:
     st.markdown(ABOUT_MD)
     st.table({"": [k for k, _ in FACTS], " ": [v for _, v in FACTS]})
+
+# Last, so the count reflects a generation this run may have just spent.
+render_budget_caption(budget_slot)
